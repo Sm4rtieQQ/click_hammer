@@ -1,0 +1,23 @@
+Ik ga een Vue 3 clicker game bouwen met TypeScript genaamd ClickHammer
+
+Features:
+- Click mechaniek (klik op button = +1 punt)
+- Project mechaniek (door punten te verdienen worden projecten voltooid)
+- Voltooien van project verdient munten
+- Upgrades shop (koop upgrades met munten)
+- Exponentiele kosten schaal (upgrades worden steeds duurder)
+- LocalStorage persistentie (progressie bewaren)
+
+Tech stack:
+- Vue 3 Composition API + TypeScript + Vite
+- Composables pattern (useGameState voor alle logic)
+- Component hiërarchie (props down, events up)
+
+Genereer een AGENTS.md met:
+- Goal (wat is het spel, en wat is het doel?)
+- Component architectuur (welke components, welke verantwoordelijkheden)
+- Typescript interfaces (Upgrade met properties, GameState)
+- Vue 3 best practices (composable, computed, watch, lifecycle hooks)
+- Key Rules (exponentiele kosten formule, setInterval cleanup, localStorage error handling)
+
+houd het beknopt maar compleet (max. 35 regels).
