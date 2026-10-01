@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Spritegalerij</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        background: #2b1d19;
+        color: #f7e7c4;
+        font-family: system-ui, sans-serif;
+      }
+
+      h2 {
+        margin: 16px 0 8px;
+        font-size: 14px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        gap: 6px;
+      }
+
+      .cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        border: 1px solid rgb(255 255 255 / 12%);
+        border-radius: 4px;
+      }
+
+      .cell span {
+        display: block;
+        aspect-ratio: 1;
+        background-color: var(--b);
+        background-image: linear-gradient(
+          160deg,
+          var(--h) 0%,
+          var(--b) 45%,
+          var(--s) 100%
+        );
+        -webkit-mask-image: var(--shape);
+        mask-image: var(--shape);
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        image-rendering: pixelated;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Inline data: items
+      const items = [
+        { id: 1, name: 'hoefijzers' },
+        { id: 2, name: 'klinknagels' },
+        { id: 3, name: 'pijlpunten' },
+        { id: 4, name: 'bijlen' },
+        { id: 5, name: 'schilden' },
+        { id: 6, name: 'dolken' },
+        { id: 7, name: 'speren' },
+        { id: 8, name: 'zwaarden' },
+        { id: 9, name: 'helmen' },
+        { id: 10, name: 'harnassen' },
+      ]
+
+      // Inline data: materials met palettes
+      const materials = [
+        { id: 1, name: 'Brons', palette: { base: '#b87333', highlight: '#e2a663', shadow: '#6f4119' } },
+        { id: 2, name: 'IJzer', palette: { base: '#8e98a3', highlight: '#c9d2dc', shadow: '#4c545c' } },
+        { id: 3, name: 'Staal', palette: { base: '#5f7d96', highlight: '#9dbcd6', shadow: '#33475a' } },
+        { id: 4, name: 'Verzilverd', palette: { base: '#c3ccd6', highlight: '#f2f6fa', shadow: '#7f8894' } },
+        { id: 5, name: 'Verguld', palette: { base: '#d3a017', highlight: '#ffdc6b', shadow: '#8a6206' } },
+      ]
+
+      // Inline SVG silhouettes als data URLs
+      const svgs = {
+        1: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="2" width="14" height="3"/><rect x="1" y="5" width="3" height="9"/><rect x="12" y="5" width="3" height="9"/><rect x="4" y="9" width="2" height="2"/><rect x="10" y="9" width="2" height="2"/></g></svg>'),
+        2: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="3" width="4" height="2"/><rect x="2" y="5" width="2" height="8"/><rect x="6" y="2" width="4" height="2"/><rect x="7" y="4" width="2" height="9"/><rect x="11" y="4" width="4" height="2"/><rect x="12" y="6" width="2" height="7"/></g></svg>'),
+        3: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="7" y="1" width="2" height="2"/><rect x="6" y="3" width="4" height="2"/><rect x="5" y="5" width="6" height="2"/><rect x="4" y="7" width="8" height="2"/><rect x="2" y="9" width="12" height="3"/><rect x="4" y="12" width="8" height="2"/></g></svg>'),
+        4: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="2" y="1" width="7" height="1"/><rect x="1" y="2" width="9" height="1"/><rect x="0" y="3" width="10" height="1"/><rect x="0" y="4" width="9" height="1"/><rect x="1" y="5" width="8" height="1"/><rect x="2" y="6" width="7" height="1"/><rect x="3" y="7" width="4" height="1"/><rect x="5" y="8" width="2" height="7"/></g></svg>'),
+        5: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="3" y="2" width="10" height="2"/><rect x="2" y="4" width="12" height="5"/><rect x="3" y="9" width="10" height="3"/><rect x="5" y="12" width="6" height="2"/><rect x="7" y="14" width="2" height="1"/></g></svg>'),
+        6: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="7" y="2" width="2" height="5"/><rect x="6" y="3" width="1" height="3"/><rect x="9" y="3" width="1" height="3"/><rect x="4" y="7" width="8" height="2"/><rect x="7" y="9" width="2" height="4"/><rect x="6" y="13" width="4" height="2"/></g></svg>'),
+        7: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="7" y="0" width="2" height="2"/><rect x="6" y="2" width="4" height="3"/><rect x="5" y="5" width="6" height="2"/><rect x="7" y="7" width="2" height="8"/></g></svg>'),
+        8: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="7" y="1" width="2" height="9"/><rect x="6" y="2" width="1" height="7"/><rect x="9" y="2" width="1" height="7"/><rect x="4" y="10" width="8" height="1"/><rect x="7" y="11" width="2" height="3"/><rect x="6" y="14" width="4" height="1"/></g></svg>'),
+        9: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="5" y="1" width="6" height="2"/><rect x="4" y="3" width="8" height="4"/><rect x="7" y="5" width="2" height="6"/><rect x="2" y="7" width="12" height="2"/><rect x="3" y="9" width="3" height="5"/><rect x="10" y="9" width="3" height="5"/></g></svg>'),
+        10: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges"><g fill="#ffffff"><rect x="1" y="2" width="5" height="2"/><rect x="10" y="2" width="5" height="2"/><rect x="3" y="4" width="10" height="5"/><rect x="4" y="9" width="8" height="3"/><rect x="3" y="12" width="10" height="2"/><rect x="5" y="14" width="6" height="1"/></g></svg>'),
+      }
+
+      const SIZES = [16, 32, 64]
+
+      function renderRow(material, size) {
+        const row = document.createElement('div')
+        row.className = 'row'
+
+        items.forEach((item) => {
+          const cell = document.createElement('div')
+          cell.className = 'cell'
+
+          const span = document.createElement('span')
+          span.style.width = size + 'px'
+          span.style.setProperty('--shape', `url("${svgs[item.id]}")`)
+          span.style.setProperty('--b', material.palette.base)
+          span.style.setProperty('--h', material.palette.highlight)
+          span.style.setProperty('--s', material.palette.shadow)
+
+          cell.appendChild(span)
+          row.appendChild(cell)
+        })
+
+        return row
+      }
+
+      const root = document.getElementById('root')
+      SIZES.forEach((size) => {
+        const h2 = document.createElement('h2')
+        h2.textContent = `Grid 16x16 op ${size}px (${size / 16}x)`
+        root.appendChild(h2)
+
+        materials.forEach((material) => {
+          root.appendChild(renderRow(material, size))
+        })
+      })
+    </script>
+  </body>
+</html>

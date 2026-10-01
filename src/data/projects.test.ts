@@ -6,7 +6,7 @@ describe('projects', () => {
     expect(projects.map(({ id }) => id)).toEqual([1, 2, 3])
     expect(projects.map(({ name }) => name)).toEqual([
       'Herstel het aambeeld',
-      'Bouw de smidse',
+      'Bouw de smederij',
       'Bevrijd de vesting',
     ])
   })

@@ -414,5 +414,9 @@ export function normalizeGameState(value: unknown): GameState {
     nextOrderId,
     offeredOrders,
     activeOrder,
+    autoClickerUnlocked:
+      typeof value.autoClickerUnlocked === 'boolean'
+        ? value.autoClickerUnlocked
+        : false,
   }
 }

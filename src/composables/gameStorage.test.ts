@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { createTestGameState } from '../test/fixtures'
 import { createInitialGameState } from '../types/game'
 import {
   GAME_STORAGE_KEY,
@@ -23,6 +24,31 @@ class FakeStorage implements GameStorage {
 }
 
 describe('game storage adapter', () => {
+  it('restores the auto-clicker unlock across a reload', () => {
+    const storage = new FakeStorage()
+    const state = createTestGameState({ coins: 0, autoClickerUnlocked: true })
+
+    expect(saveGameState(state, storage)).toBe(true)
+
+    const restored = loadGameState(storage)
+
+    expect(restored.autoClickerUnlocked).toBe(true)
+  })
+
+  it('falls back to a locked auto-clicker for an invalid unlock flag', () => {
+    const storage = new FakeStorage()
+
+    storage.setItem(
+      GAME_STORAGE_KEY,
+      JSON.stringify({
+        ...createTestGameState(),
+        autoClickerUnlocked: 'yes',
+      }),
+    )
+
+    expect(loadGameState(storage).autoClickerUnlocked).toBe(false)
+  })
+
   it('serializes exactly the necessary game state fields', () => {
     const state = {
       ...createInitialGameState(),
@@ -31,12 +57,14 @@ describe('game storage adapter', () => {
       completedProjects: [1],
       upgrades: [101, 101],
       projectProgress: { 1: 10 },
+      autoClickerUnlocked: true,
     }
 
     const serializedState = serializeGameState(state)
 
     expect(Object.keys(JSON.parse(serializedState) as object).sort()).toEqual([
       'activeOrder',
+      'autoClickerUnlocked',
       'coins',
       'completedOrderCount',
       'completedProjects',

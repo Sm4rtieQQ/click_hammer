@@ -17,7 +17,7 @@ describe('ProjectList', () => {
 
     expect(wrapper.findAll('.project-list__item')).toHaveLength(2)
     expect(wrapper.text()).toContain('Herstel het aambeeld')
-    expect(wrapper.text()).toContain('Bouw de smidse')
+    expect(wrapper.text()).toContain('Bouw de smederij')
     expect(wrapper.text()).not.toContain('Bevrijd de vesting')
     expect(wrapper.get('.project-list__item--completed').text()).toContain('Voltooid')
     expect(wrapper.get('.project-list__item--locked').text()).toContain(
@@ -37,6 +37,24 @@ describe('ProjectList', () => {
 
     expect(wrapper.findComponent(ProjectTracker).exists()).toBe(true)
     expect(wrapper.getComponent(ProjectTracker).props('progress')).toBe(4)
+  })
+
+  it('shows an empty state instead of an empty list when no projects exist', () => {
+    const wrapper = mount(ProjectList, {
+      props: {
+        projects: [],
+        activeProjectId: undefined,
+        completedProjectIds: [],
+        projectProgress: {},
+      },
+    })
+
+    expect(wrapper.findAll('.project-list__item')).toHaveLength(0)
+    expect(wrapper.find('.project-list__items').exists()).toBe(false)
+    expect(wrapper.get('.project-list__empty').attributes('role')).toBe('status')
+    expect(wrapper.get('.project-list__empty').text()).toContain(
+      'geen projecten beschikbaar',
+    )
   })
 
   it('forwards project completion events', async () => {

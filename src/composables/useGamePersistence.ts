@@ -1,5 +1,5 @@
-import { onUnmounted, watch } from 'vue'
-import type { DeepReadonly, WatchStopHandle } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import type { ComputedRef, DeepReadonly, WatchStopHandle } from 'vue'
 import type { GameState } from '../types/game'
 import { saveGameState } from './gameStorage'
 import type { GameStorage } from './gameStorage'
@@ -14,6 +14,7 @@ export interface UseGamePersistenceOptions {
 export interface UseGamePersistenceReturn {
   readonly saveNow: () => boolean
   readonly stop: () => void
+  readonly hasWriteError: ComputedRef<boolean>
 }
 
 export function useGamePersistence(
@@ -27,6 +28,7 @@ export function useGamePersistence(
   let saveTimeoutId: number | undefined
   let isStopped = false
   let stopWatching: WatchStopHandle | undefined
+  const writeFailed = ref(false)
 
   function clearSaveTimeout(): void {
     if (saveTimeoutId === undefined) {
@@ -39,7 +41,12 @@ export function useGamePersistence(
 
   function saveNow(): boolean {
     clearSaveTimeout()
-    return saveGameState(gameState, options.storage)
+
+    const didSave = saveGameState(gameState, options.storage)
+
+    writeFailed.value = !didSave
+
+    return didSave
   }
 
   function scheduleSave(): void {
@@ -50,7 +57,10 @@ export function useGamePersistence(
     clearSaveTimeout()
     saveTimeoutId = window.setTimeout(() => {
       saveTimeoutId = undefined
-      saveGameState(gameState, options.storage)
+
+      const didSave = saveGameState(gameState, options.storage)
+
+      writeFailed.value = !didSave
     }, debounceMs)
   }
 
@@ -68,8 +78,11 @@ export function useGamePersistence(
   stopWatching = watch(gameState, scheduleSave, { deep: true })
   onUnmounted(stop)
 
+  const hasWriteError = computed(() => writeFailed.value)
+
   return {
     saveNow,
     stop,
+    hasWriteError,
   }
 }

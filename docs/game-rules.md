@@ -29,7 +29,7 @@ De eerste keer dat de game wordt geopend, geldt:
 ## Clickregels
 
 - Een handmatige klik voegt exact de huidige `clickPower` toe aan het actieve doel van de gekozen view.
-- Op **Smidse** voeden clicks de actieve order.
+- Op **Smederij** voeden clicks de actieve order.
 - Op **Projecten** voeden clicks het actieve ontgrendelde project.
 - Op **Upgrades** zijn geen clickacties beschikbaar.
 - `clickPower` begint op `1`.
@@ -56,7 +56,7 @@ Per earned point op het projecttabblad:
 | Volgorde | Project | Ontgrendeling | Vereiste punten | Munten |
 | ---: | --- | ---: | ---: | ---: |
 | 1 | Herstel het aambeeld | 0 | 10 | 0 |
-| 2 | Bouw de smidse | 1.000 | 100.000 | 5.000.000 |
+| 2 | Bouw de smederij | 1.000 | 100.000 | 5.000.000 |
 | 3 | Bevrijd de vesting | 25.000.000 | 250.000.000.000 | 500.000.000 |
 
 `Herstel het aambeeld` is verplicht als eerste doel. Het levert geen munten. De andere projecten leveren veel meer munten dan een afzonderlijke order.
@@ -172,6 +172,45 @@ Een opgeslagen state zonder de velden `completedOrderCount`, `nextOrderId`, `off
 Daarnaast worden onbekende IDs, ongeldige orderdata, dubbele orderitems en ongeldige projectvoortgang geneormaliseerd. Storage-lezen en -schrijven gebeuren binnen `try/catch`; fouten blokkeren gameplay niet.
 
 `useGamePersistence` bewaakt de state diep met een debounce van 250 ms. Clickreeksen schrijven niet per click; projectvoltooiingen, ordervoltooiingen en aankopen worden als volledige state opgeslagen.
+
+## Toegankelijkheid
+
+- `GameHeader` heeft een `aria-live="polite"` en `aria-atomic="true"` regio voor score en munten.
+- De tablist in `GameNavigation` ondersteunt `ArrowLeft`, `ArrowRight`, `ArrowUp`, `ArrowDown`, `Home` en `End` met wrap-around; disabled views worden overgeslagen en de focus volgt de geselecteerde tab.
+- `Escape` sluit het mobiele menu en zet de focus terug op de menuknop.
+- Orderknoppen dragen de commandoregel in het `aria-label`, zodat de twee offers te onderscheiden zijn.
+- Upgradeknoppen noemen prijs en koopstatus in het `aria-label`.
+- Alle interacties werken met keyboard; disabled knoppen en views gebruiken `disabled` en `aria-disabled`.
+- Minimale contrastverhouding voor tekst is 4.5:1; `text` op `background` is 15.2:1 en `muted` op `surface-raised` is 6.9:1.
+
+## Visuele feedback
+
+- `--transition-fast` is 100ms en `--transition-medium` is 180ms; alle kaarten, knoppen en balken gebruiken die tokens.
+- `prefers-reduced-motion: reduce` zet elke animatie en transitie op 1ms.
+- Interactieve elementen zijn minimaal `--control-min-height` (2.75rem) hoog.
+- Hover geven kaarten een subtielere rand en knoppen een lichte opbranding; active laat een knop 0.1rem zakken. Geblokkeerde elementen geven geen hover- of active-feedback.
+
+## Status- en foutstates
+
+| State | Trigger | Zichtbaar |
+| --- | --- | --- |
+| Geen melding | verse save (`fresh`) of geldige save (`restored`) | normaal spel |
+| Opslagwaarschuwing | `recovered`, `unavailable` of een mislukte write | niet-blokkerende `GameStatusPanel` met sluitknop |
+| Alle projecten klaar | geen ontgrendeld project meer | `info`-paneel, de aambeeldknop verdwijnt |
+| Geen projecten | lege projectcatalogus | `role="status"` in plaats van een lege lijst |
+| Geen orders | lege orderoffers | `role="status"` in plaats van een lege lijst |
+| Geen upgrades | lege upgradecatalogus | bestaande lege-catalogusmelding |
+| Niet betaalbaar | `coins < currentCost` | `Niet betaalbaar` plus `Nog N munten nodig` |
+
+Een opslagfout blokkeert nooit clicks; het spel blijft volledig speelbaar en waarschuwt alleen dat de voortgang verdwijnt bij het sluiten van het venster.
+
+## Navigatieregels
+
+- De views zijn `Projecten`, `Smederij` (id `smithy`) en `Upgrades`; de game start op `Projecten`.
+- Zolang `Herstel het aambeeld` niet voltooid is, zijn `Smederij` en `Upgrades` disabled in zowel de desktoptabs als het mobiele menu.
+- Een disabled view kan niet geselecteerd worden: `GameNavigation.vue` negeert de `select` en `App.vue` weigert de view.
+- Wordt een actieve view geblokkeerd (bijvoorbeeld na een reset), springt de game terug naar `Projecten`.
+- Alle tekst in de UI is niet-selecteerbaar (`user-select: none` op `body`).
 
 ## Visuele feedbackregels
 

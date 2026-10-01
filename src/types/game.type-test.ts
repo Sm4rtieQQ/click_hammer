@@ -60,6 +60,7 @@ const gameState: GameState = {
   nextOrderId: 1,
   offeredOrders: [],
   activeOrder: null,
+  autoClickerUnlocked: false,
 }
 
 void upgrade

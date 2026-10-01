@@ -8,12 +8,16 @@ const purchaseCounts = {
   101: 0,
   102: 0,
   103: 0,
+  104: 0,
+  105: 0,
 }
 
 const currentCosts = {
   101: 10,
   102: 20,
   103: 40,
+  104: 50,
+  105: 1,
 }
 
 function mountShop(
@@ -23,6 +27,7 @@ function mountShop(
     currentCosts: Record<number, number>
     affordableUpgradeIds: Set<number>
     availableUpgrades: typeof upgrades
+    showDevUpgrades: boolean
   }> = {},
 ) {
   return mount(UpgradeShop, {
@@ -32,6 +37,7 @@ function mountShop(
       purchaseCounts: overrides.purchaseCounts ?? purchaseCounts,
       currentCosts: overrides.currentCosts ?? currentCosts,
       affordableUpgradeIds: overrides.affordableUpgradeIds ?? new Set<number>(),
+      showDevUpgrades: overrides.showDevUpgrades ?? false,
     },
   })
 }
@@ -40,14 +46,16 @@ describe('UpgradeShop', () => {
   it('renders the catalog in order and passes counts and costs', () => {
     const wrapper = mountShop({
       coins: 40,
-      affordableUpgradeIds: new Set([101, 102, 103]),
+      affordableUpgradeIds: new Set([101, 102, 103, 104, 105]),
       purchaseCounts: { ...purchaseCounts, 101: 2 },
+      // De dev-only upgrade is standaard verborgen in de winkel.
+      showDevUpgrades: true,
     })
     const items = wrapper.findAllComponents(UpgradeItem)
 
     expect(items).toHaveLength(upgrades.length)
     expect(items.map((item) => item.props('upgrade').id)).toEqual([
-      101, 102, 103,
+      101, 102, 103, 104, 105,
     ])
     expect(items[0].props('currentCost')).toBe(10)
     expect(items[0].props('purchaseCount')).toBe(2)
@@ -97,7 +105,7 @@ describe('UpgradeShop', () => {
     expect(item.get('button').text()).toBe('Niet betaalbaar')
   })
 
-  it('renders an empty state without upgrade items', () => {
+  it('shows an empty state without upgrade items', () => {
     const wrapper = mountShop({
       availableUpgrades: [],
     })
@@ -106,5 +114,34 @@ describe('UpgradeShop', () => {
     expect(wrapper.get('.upgrade-shop__empty').text()).toContain(
       'geen upgrades beschikbaar',
     )
+  })
+
+  it('hides dev-only upgrades when showDevUpgrades is false', () => {
+    const wrapper = mountShop({
+      showDevUpgrades: false,
+    })
+
+    const items = wrapper.findAllComponents(UpgradeItem)
+    expect(items).toHaveLength(upgrades.length - 1) // 1 upgrade is devOnly
+    // Ontwikkelaarskracht (id 105) mag niet zichtbaar zijn
+    expect(items.map((item) => item.props('upgrade').id)).not.toContain(105)
+  })
+
+  it('shows dev-only upgrades when showDevUpgrades is true', () => {
+    const wrapper = mountShop({
+      showDevUpgrades: true,
+    })
+
+    const items = wrapper.findAllComponents(UpgradeItem)
+    expect(items).toHaveLength(upgrades.length) // alle upgrades incl. devOnly
+    expect(items.map((item) => item.props('upgrade').id)).toContain(105)
+  })
+
+  it('passes the coin balance down so items can show the shortfall', () => {
+    const wrapper = mountShop({ coins: 7 })
+    const item = wrapper.getComponent(UpgradeItem)
+
+    expect(item.props('coins')).toBe(7)
+    expect(item.get('.upgrade-item__facts').text()).toContain('Nog 3 munten nodig')
   })
 })

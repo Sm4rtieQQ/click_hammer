@@ -61,15 +61,118 @@ describe('App', () => {
     expect(wrapper.findComponent(TestControls).exists()).toBe(true)
   })
 
-  it('switches between projects, smithy and upgrades', async () => {
+  it('disables the smithy and upgrades views during Herstel het aambeeld', async () => {
+    storeState({
+      points: 5,
+      projectProgress: { 1: 5 },
+    })
     const wrapper = mount(App)
     const navigation = wrapper.getComponent(GameNavigation)
+    const smithyTab = navigation.get(
+      '.game-navigation__tab[data-view="smithy"]',
+    )
+    const upgradesTab = navigation.get(
+      '.game-navigation__tab[data-view="upgrades"]',
+    )
+
+    expect(smithyTab.attributes('disabled')).toBeDefined()
+    expect(upgradesTab.attributes('disabled')).toBeDefined()
+
+    await smithyTab.trigger('click')
+    await upgradesTab.trigger('click')
+
+    expect(getExposedApi(wrapper).activeView).toBe('projects')
+    expect(wrapper.findComponent(UpgradeShop).exists()).toBe(false)
+    expect(wrapper.findComponent(OrderSelection).exists()).toBe(false)
+  })
+
+  it('starts without any status notice on a fresh game', () => {
+    const wrapper = mount(App)
+
+    expect(wrapper.find('.game-notice').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Voortgang wordt niet bewaard')
+  })
+
+  it('warns but stays playable when the saved state had to be recovered', () => {
+    window.localStorage.setItem(GAME_STORAGE_KEY, '{not valid json')
+
+    const wrapper = mount(App)
+    const notice = wrapper.get('.game-notice--storage')
+
+    expect(notice.text()).toContain('Voortgang wordt niet bewaard')
+    expect(wrapper.findComponent(GameButton).exists()).toBe(true)
+    expect(getExposedApi(wrapper).gameState.points).toBe(0)
+  })
+
+  it('lets the player dismiss the storage notice', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('Storage read failed')
+    })
+
+    const wrapper = mount(App)
+    expect(wrapper.find('.game-notice--storage').exists()).toBe(true)
+
+    await wrapper.get('.game-notice__dismiss').trigger('click')
+
+    expect(wrapper.find('.game-notice--storage').exists()).toBe(false)
+  })
+
+  it('shows an all-projects-complete state without an active project', () => {
+    storeState({
+      points: 1_000_000,
+      completedProjects: [1, 2, 3],
+      projectProgress: { 1: 10, 2: 100_000, 3: 5_000_000 },
+    })
+
+    const wrapper = mount(App)
+
+    expect(wrapper.findComponent(GameButton).exists()).toBe(false)
+    expect(wrapper.get('.game-notice--projects').text()).toContain(
+      'Alle projecten voltooid',
+    )
+  })
+
+  it('enables the smithy and upgrades views once the first project is done', async () => {
+    storeState({
+      points: 9,
+      projectProgress: { 1: 9 },
+    })
+    const wrapper = mount(App)
+    const navigation = wrapper.getComponent(GameNavigation)
+
+    await wrapper.getComponent(GameButton).get('button').trigger('click')
+    await nextTick()
+
+    expect(
+      navigation
+        .get('.game-navigation__tab[data-view="smithy"]')
+        .attributes('disabled'),
+    ).toBeUndefined()
+    expect(
+      navigation
+        .get('.game-navigation__tab[data-view="upgrades"]')
+        .attributes('disabled'),
+    ).toBeUndefined()
+  })
+
+  it('switches between projects, smithy and upgrades', async () => {
+    storeState({
+      completedProjects: [1],
+    })
+    const wrapper = mount(App)
+    const navigation = wrapper.getComponent(GameNavigation)
+
+    expect(
+      navigation
+        .get('.game-navigation__tab[data-view="smithy"]')
+        .attributes('disabled'),
+    ).toBeUndefined()
 
     await navigation
       .get('.game-navigation__tab[data-view="smithy"]')
       .trigger('click')
     expect(wrapper.findComponent(ProjectList).exists()).toBe(false)
-    expect(wrapper.find('.game-gate').exists()).toBe(true)
+    expect(wrapper.findComponent(OrderSelection).exists()).toBe(true)
 
     await navigation
       .get('.game-navigation__tab[data-view="upgrades"]')
@@ -152,6 +255,47 @@ describe('App', () => {
 
     expect(appApi.gameState.coins).toBe(10)
     expect(appApi.gameState.upgrades).toEqual([101])
+  })
+
+  it('completes a project and an order using only the keyboard', async () => {
+    storeState({
+      points: 9,
+      projectProgress: { 1: 9 },
+    })
+    const wrapper = mount(App, { attachTo: document.body })
+    const appApi = getExposedApi(wrapper)
+    const navigation = wrapper.getComponent(GameNavigation)
+
+    // Enter op de aambeeldknop voltooit het eerste project.
+    await wrapper.getComponent(GameButton).get('button').trigger('keydown', {
+      key: 'Enter',
+    })
+    await nextTick()
+
+    expect(appApi.gameState.completedProjects).toEqual([1])
+
+    // De tablist is met pijltjestoets te bedienen; een native click is niet nodig.
+    await navigation.get('.game-navigation__tabs').trigger('keydown', {
+      key: 'ArrowRight',
+    })
+    expect(appApi.activeView).toBe('smithy')
+
+    await wrapper
+      .getComponent(OrderSelection)
+      .findAll('.order-selection__button')[1]
+      .trigger('click')
+
+    for (let click = 0; click < 10; click += 1) {
+      await wrapper
+        .getComponent(GameButton)
+        .get('button')
+        .trigger('keydown', { key: ' ' })
+    }
+
+    expect(appApi.gameState.completedOrderCount).toBe(1)
+    expect(appApi.gameState.coins).toBe(10)
+
+    wrapper.unmount()
   })
 
   it('formats the score visually while keeping precise central state', () => {

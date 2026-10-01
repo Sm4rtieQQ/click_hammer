@@ -19,6 +19,7 @@ export type GameStateSnapshot = {
   readonly nextOrderId: number
   readonly offeredOrders: readonly WorkOrder[]
   readonly activeOrder: WorkOrder | null
+  readonly autoClickerUnlocked: boolean
 }
 
 function getStorage(storage?: GameStorage): GameStorage {
@@ -36,6 +37,7 @@ export function serializeGameState(state: GameStateSnapshot): string {
     nextOrderId: state.nextOrderId,
     offeredOrders: state.offeredOrders.map((order) => ({ ...order })),
     activeOrder: state.activeOrder === null ? null : { ...state.activeOrder },
+    autoClickerUnlocked: state.autoClickerUnlocked,
   }
 
   return JSON.stringify(snapshot)
@@ -53,24 +55,57 @@ export function saveGameState(
   }
 }
 
-export function loadGameState(storage?: GameStorage): GameState {
+export type GameLoadStatus =
+  | 'restored'
+  | 'fresh'
+  | 'recovered'
+  | 'unavailable'
+
+export interface GameLoadResult {
+  readonly state: GameState
+  readonly status: GameLoadStatus
+}
+
+export function loadGameStateResult(storage?: GameStorage): GameLoadResult {
+  let targetStorage: GameStorage
+
   try {
-    const targetStorage = getStorage(storage)
-    const serializedState = targetStorage.getItem(GAME_STORAGE_KEY)
+    targetStorage = getStorage(storage)
+  } catch {
+    return { state: createInitialGameState(), status: 'unavailable' }
+  }
 
-    if (serializedState === null) {
-      return createInitialGameState()
-    }
+  let serializedState: string | null
 
+  try {
+    serializedState = targetStorage.getItem(GAME_STORAGE_KEY)
+  } catch {
+    return { state: createInitialGameState(), status: 'unavailable' }
+  }
+
+  if (serializedState === null) {
+    return { state: createInitialGameState(), status: 'fresh' }
+  }
+
+  try {
     const parsedState = JSON.parse(serializedState) as unknown
     const normalizedState = normalizeGameState(parsedState)
+    const wasNormalized =
+      JSON.stringify(parsedState) !== JSON.stringify(normalizedState)
 
-    if (JSON.stringify(parsedState) !== JSON.stringify(normalizedState)) {
+    if (wasNormalized) {
       saveGameState(normalizedState, targetStorage)
     }
 
-    return normalizedState
+    return {
+      state: normalizedState,
+      status: wasNormalized ? 'recovered' : 'restored',
+    }
   } catch {
-    return createInitialGameState()
+    return { state: createInitialGameState(), status: 'recovered' }
   }
+}
+
+export function loadGameState(storage?: GameStorage): GameState {
+  return loadGameStateResult(storage).state
 }

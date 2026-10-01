@@ -27,6 +27,7 @@ describe('useGameState', () => {
       nextOrderId: 1,
       offeredOrders: [],
       activeOrder: null,
+      autoClickerUnlocked: false,
     })
     expectTypeOf(gameState).toEqualTypeOf<DeepReadonly<GameState>>()
     expectTypeOf(addPoints).toEqualTypeOf<(target?: 'order' | 'project') => void>()
@@ -99,8 +100,16 @@ describe('useGameState', () => {
       101: 10,
       102: 20,
       103: 40,
+      104: 50,
+      105: 1,
     })
-    expect(purchaseCounts.value).toEqual({ 101: 0, 102: 0, 103: 0 })
+    expect(purchaseCounts.value).toEqual({
+      101: 0,
+      102: 0,
+      103: 0,
+      104: 0,
+      105: 0,
+    })
     expect(completedProjectIds.value).toEqual([])
     expect(activeProject.value?.id).toBe(1)
     expect(activeProjectProgress.value).toBe(0)

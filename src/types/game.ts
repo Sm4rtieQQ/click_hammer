@@ -5,6 +5,9 @@ export interface Upgrade {
   baseCost: number
   costMultiplier: number
   clickBonus: number
+  autoClickerUnlocker?: boolean
+  maxPurchases?: number
+  devOnly?: boolean
 }
 
 export interface Material {
@@ -57,6 +60,7 @@ export interface GameState {
   nextOrderId: number
   offeredOrders: WorkOrder[]
   activeOrder: WorkOrder | null
+  autoClickerUnlocked: boolean
 }
 
 export function createInitialGameState(): GameState {
@@ -70,5 +74,6 @@ export function createInitialGameState(): GameState {
     nextOrderId: 1,
     offeredOrders: [],
     activeOrder: null,
+    autoClickerUnlocked: false,
   }
 }

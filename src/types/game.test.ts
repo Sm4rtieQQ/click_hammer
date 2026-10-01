@@ -13,6 +13,7 @@ describe('createInitialGameState', () => {
       nextOrderId: 1,
       offeredOrders: [],
       activeOrder: null,
+      autoClickerUnlocked: false,
     })
   })
 

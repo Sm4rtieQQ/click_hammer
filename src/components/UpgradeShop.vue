@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Upgrade } from '../types/game'
 import { getUpgradeCost } from '../composables/useGameState'
 import UpgradeItem from './UpgradeItem.vue'
@@ -9,7 +10,14 @@ const props = defineProps<{
   purchaseCounts: Readonly<Record<number, number>>
   currentCosts: Readonly<Record<number, number>>
   affordableUpgradeIds: ReadonlySet<number>
+  showDevUpgrades: boolean
 }>()
+
+const visibleUpgrades = computed(() =>
+  props.showDevUpgrades
+    ? props.upgrades
+    : props.upgrades.filter((upgrade) => !upgrade.devOnly),
+)
 
 const emit = defineEmits<{
   'buy-upgrade': [upgradeId: number]
@@ -58,7 +66,7 @@ function handleBuy(upgradeId: number): void {
     </div>
 
     <p
-      v-if="upgrades.length === 0"
+      v-if="visibleUpgrades.length === 0"
       class="upgrade-shop__empty"
     >
       Er zijn momenteel geen upgrades beschikbaar.
@@ -69,12 +77,13 @@ function handleBuy(upgradeId: number): void {
       class="upgrade-shop__list"
     >
       <UpgradeItem
-        v-for="upgrade in upgrades"
+        v-for="upgrade in visibleUpgrades"
         :key="upgrade.id"
         :upgrade="upgrade"
         :current-cost="getCurrentCost(upgrade)"
         :purchase-count="getPurchaseCount(upgrade.id)"
         :affordable="isAffordable(upgrade, getCurrentCost(upgrade))"
+        :coins="coins"
         @buy-upgrade="handleBuy"
       />
     </div>

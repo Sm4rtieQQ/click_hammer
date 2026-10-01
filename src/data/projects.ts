@@ -4,15 +4,15 @@ export const projects: Project[] = [
   {
     id: 1,
     name: 'Herstel het aambeeld',
-    description: 'Herstel het aambeeld om de smidse weer aan het werk te krijgen.',
+    description: 'Herstel het aambeeld om de smederij weer aan het werk te krijgen.',
     unlockPoints: 0,
     requiredPoints: 10,
     coinReward: 0,
   },
   {
     id: 2,
-    name: 'Bouw de smidse',
-    description: 'Bouw een nieuwe smidse voor de volgende projecten.',
+    name: 'Bouw de smederij',
+    description: 'Bouw een nieuwe smederij voor de volgende projecten.',
     unlockPoints: 1_000,
     requiredPoints: 100_000,
     coinReward: 5_000_000,

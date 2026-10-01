@@ -198,41 +198,103 @@
 
 ## Fase 6 — UX, toegankelijkheid en integratie
 
-- [ ] **T28 — Voeg lege, laden- en foutstates toe (2 uur)**
+- [x] **T28 — Voeg lege, laden- en foutstates toe (2 uur)**
   - **Afhankelijk van:** T18, T24, T26.
   - **Levering:** duidelijke states voor initialisatie, geen projecten, geen beschikbare upgrades en niet-betaalbare aankopen zonder layoutverschuivingen.
   - **Test/acceptatie:** iedere state is zichtbaar en voorkomt dat de gebruiker een onmogelijke actie kan uitvoeren.
+  - **Uitgevoerd:**
+    - `gameStorage.ts`: naast `loadGameState` is er `loadGameStateResult`, dat een `GameLoadStatus` teruggeeft: `restored`, `fresh`, `recovered` of `unavailable`. `loadGameState` blijft de bestaande API en levert dezelfde state.
+    - `useGamePersistence.ts`: levert `hasWriteError` (computed). De vlag gaat aan zodra een save faalt en gaat weer uit zodra een save slaagt, zodat een herstelde opslag geen spookmelding laat staan.
+    - `GameStatusPanel.vue` (nieuw): één presentational paneel voor alle statusmeldingen, met `tone` `info`, `warning` of `error`. `info` gebruikt `role="status"` met `aria-live="polite"`, de andere tonen `role="alert"` met `aria-live="assertive"`. Slots: `eyebrow` en default.
+    - Initialisatie: het laden blijft synchroon, dus in plaats van een kunstmatige laadspinner toont een vers spel direct zijn eerste doel. De verse stand herken je aan het ontbreken van enige melding; `App.test.ts` bewijst dat expliciet.
+    - Foutstate: een onbruikbare of herstelde save, of een mislukte write, tonen een niet-blokkerende `warning` met een "Melding sluiten"-knop. `App.vue` combineert loadstatus en writefouten in `hasStorageNotice`.
+    - Alle projecten klaar: zonder actief project verdwijnt de aambeeldknop en verschijnt een `info`-paneel "Alle projecten voltooid" dat naar de smederij verwijst.
+    - Lege states: `ProjectList.vue` en `OrderSelection.vue` tonen een `role="status"`-melding in plaats van een lege lijst; `UpgradeShop.vue` behoudt zijn lege catalogus-melding.
+    - Niet-betaalbare aankopen: `UpgradeItem.vue` krijgt de prop `coins` en toont `Nog N munten nodig`, zodat duidelijk is waarom de knop disabled is.
+  - **Let op:** de eerste opslagmelding verandert de score na een herstelde save niet; tests die een specifiek paneel willen gebruiken, selecteren `.game-notice--storage` of `.game-notice--projects` in plaats van `.game-notice`.
 
-- [ ] **T29 — Verbeter toetsenbord- en schermlezertoegang (2 uur)**
+- [x] **T29 — Verbeter toetsenbord- en schermlezertoegang (2 uur)**
   - **Afhankelijk van:** T23, T24, T25, T28.
   - **Levering:** labels, focusvolgorde, `aria-live` voor punten/munten, duidelijke disabled-statussen en voldoende contrast.
   - **Test/acceptatie:** alle interacties zijn uitsluitend met keyboard te bedienen; een screenreader-/accessibility-check meldt geen kritieke fouten.
+  - **Uitgevoerd:**
+    - `GameHeader.vue`: de `dl` met score en munten is een `aria-live="polite"` en `aria-atomic="true"` regio, zodat waarden na een klik worden voorgelezen.
+    - `GameNavigation.vue`: de tablist is een volledig toetsenbordpatroon. Pijltjestoetsen (`ArrowLeft/Right/Up/Down`), `Home` en `End` wisselen de view met wrap-around, sluiten disabled views uit en verplaatsen de focus naar de nieuwe tab; `Escape` sluit het mobiele menu en herstelt de focus op de menuknop. Onbekende toetsen doen niets.
+    - `OrderSelection.vue`: de commandoregel is een `h3` en elke knop krijgt een `aria-label` met de volledige opdracht (`Kies opdracht: smeed 10 bronzen klinknagels`) plus `aria-disabled` tijdens een lopende keuze, zodat de twee identieke knoplabels te onderscheiden zijn.
+    - `UpgradeItem.vue`: de koopknop noemt prijs en status in het `aria-label` (`Koop X voor 10 munten` of `Niet betaalbaar: X kost 10 munten`) en `aria-disabled` loopt mee met `disabled`.
+    - `GameButton.vue`: het decoratieve hamer-glyph is `aria-hidden`; de knop blijft een native `<button>` met `disabled` en `aria-disabled`.
+    - Contrast: disabled states zijn opgehaald (tab van `45%` naar `70%` alpha, knoppen van `opacity 0.65` naar `0.85` op `--color-surface-raised`). Alle tekstcombinaties halen nu minimaal 4.5:1; gemeten waarden: `text`/`bg` 15.2:1, `muted`/`bg` 9.3:1, `accent`/`bg` 6.3:1, `focus`/`bg` 12.8:1, `muted`/`raised` 6.9:1, `accent`/`raised` 4.7:1, disabled tab 4.7:1, disabled knop 5.2:1.
+    - `eslint.config.js`: browser-globals zijn expliciet gedefinieerd zodat `document` en de `HTMLElement`-types niet als `no-undef` falen.
+    - Tests: `GameNavigation.test.ts` dekt roving focus, disabled-skip en Escape met focusherstel; `GameHeader.test.ts` dekt de live-regio; `OrderComponents.test.ts` en `UpgradeItem.test.ts` dekken de labels; `App.test.ts` heeft een keyboard-only flow die project en order volledig met Enter, spatie en pijltjestoetsen afrondt.
 
-- [ ] **T30 — Voeg responsive en visuele feedback af (3 uur)**
+- [x] **T30 — Voeg responsive en visuele feedback af (3 uur)**
   - **Afhankelijk van:** T22–T28.
   - **Levering:** consistente kaartlayout, responsive winkel en projectweergave, click-feedback en focus/hover/active states op desktop en mobiel.
   - **Test/acceptatie:** handmatige controles op 320px, 768px en 1440px; de primaire click- en buy-acties blijven zichtbaar en goed bruikbaar.
+  - **Uitgevoerd:**
+    - `main.css`: nieuwe tokens `--control-min-height: 2.75rem`, `--transition-fast: 100ms ease` en `--transition-medium: 180ms ease`. `.panel` krijgt een uniforme overgang op rand, schaduw en transform, zodat elke kaart dezelfde feedback voelt.
+    - `main.css`: `prefers-reduced-motion: reduce` zet alle animaties en transities op 1ms. Dit was een expliciete vereuze uit T40 en lag logisch bij de visuele feedback.
+    - `GameButton.vue`: de strike-animatie en hover/active gebruiken de tokens; `min-width` werd `width: min(100%, 18rem)` zodat de knop op smalle schermen niet krimpt.
+    - `GameNavigation.vue`: tabs, menuknop en mobiele items krijgen hover- en active-states met `:not(:disabled)`, zodat een geblokkeerde view geen hoverfeedback geeft. De actieve tab behoudt zijn accent op hover.
+    - `OrderSelection.vue`, `UpgradeItem.vue`, `ProjectList.vue`: kaarten krijgen een subtiele rand-hover; koop- en orderknoppen krijgen hover (licht op) en active (0.1rem omlaag) naast hun bestaande disabled-stijl. Locked projectkaarten reageren niet.
+    - Alle schuifknoppen gebruiken nu `--control-min-height`, ook de meldingsknop in `App.vue` en de resetknop in `TestControls.vue`.
+    - Responsive: de bestaande bretes van `48rem` en `36rem` blijven leidend; de winkel en projectweergave blijven één kolom binnen de `44rem`-contentbreedte, en de aambeeldknop schaalt mee van 18rem tot de volle breedte.
+  - **Handmatige controle:** gemeten in een headless Edge via het DevTools-protocol op 320px, 768px en 1440px, op alle drie de views met een vooruitgeladen save. Op elke breedte is de horizontale overflow 0 en vallen de aambeeldknop (288 × 64px), de ordertracker en de koopknoppen volledig binnen het venster. De kleinste interactieve target is 44px (2.75rem). Met `prefers-reduced-motion: reduce` daalt `transition-duration` naar 0.001s.
 
-- [ ] **T31 — Test een volledige projectsessie end-to-end (3 uur)**
+- [x] **T31 — Test een volledige projectsessie end-to-end (3 uur)**
   - **Afhankelijk van:** T27, T28, T29.
   - **Levering:** een geautomatiseerde of reproduceerbare testscriptflow: clicks op Projecten, `Herstel het aambeeld` zonder munten voltooien, een order kiezen en een tweede order voltooien.
   - **Test/acceptatie:** de flow eindigt met correcte `points`, `coins`, `projectProgress` en `completedProjects`; de reward wordt niet dubbel toegekend.
+  - **Uitgevoerd:** `src/App.sessions.test.ts` bevat de flow in `describe('T31 full project session')`, met gedeelde helpers `clickAnvil`, `gotoView`, `chooseOrder` en `completeOrder` die alleen door de UI navigeren.
+    - Verse save: klik 10 keer op Projecten, daarna `points === 10`, `completedProjects === [1]`, `projectProgress === { 1: 10 }` en `coins === 0`, want het eerste project levert nul munten.
+    - Geen dubbele beloning: extra `addPoints('project')` laten `completedProjects` op `[1]` en `coins` op 0.
+    - Eerste order: de smederij toont direct twee offers zodra project 1 klaar is; na het kiezen verdwijnen de offers en verschijnt `OrderTracker`. Na `requiredPoints` clicks staan `completedOrderCount === 1`, `coins === coinReward` en is de order gesloten.
+    - Tweede order: `quantity` en `coinReward` zijn strikt groter dan bij de eerste, en `coins` is exact de som van beide beloningen.
+    - Persistentie: met `vi.useFakeTimers()` en 300ms vooruitlopen wordt de opgeslagen state gecontroleerd op `completedProjects`, `completedOrderCount`, `coins` en `projectProgress`; een remount levert exact dezelfde stand op.
+    - Tweede test: 25 extra projectklikken en 25 extra orderklikken veranderen de beloning of tellen niets dubbel.
+  - **Let op:** na project 1 is er bij 15 punten geen actief project meer, dus is er op het projecttabblad geen aambeeldknop. Die extra klikken worden daarom via de geëxposeerde `addPoints` gezet; dat is dezelfde code als de UI aanroept.
 
-- [ ] **T32 — Test een volledige upgradesessie end-to-end (3 uur)**
+- [x] **T32 — Test een volledige upgradesessie end-to-end (3 uur)**
   - **Afhankelijk van:** T27, T28, T29.
   - **Levering:** een flow van een voltooide order met munten naar eerste upgradeaankoop, herberekende kost, tweede aankoop en verhoogde `clickPower` volgens de productformule.
   - **Test/acceptatie:** de flow toont nooit een negatieve coinbalans; de derde catalogusprijs volgt exact de AGENTS-formule.
+  - **Uitgevoerd:** `src/App.sessions.test.ts` bevat de flow in `describe('T32 full upgrade session')`.
+    - Munten verdienen: vier orders achter elkaar via `completeOrder`, zodat er genoeg munten zijn voor twee aankopen.
+    - Prijsregel: `getUpgradeCost` wordt in de test naast de echte cataloguswaarden gezet, dus `firstCost === baseCost`, `secondCost === floor(baseCost * costMultiplier ** 1)` en `thirdCost === floor(baseCost * costMultiplier ** 2)` voor `Sterkere hamer` (10 → 15 → 22).
+    - Aankopen: de eerste aankoop trekt exact `firstCost` af en toont `Gekocht 1×` met de herberekende prijs; de tweede aankoop trekt `secondCost` af en toont `Gekocht 2×` met de derde catalogusprijs.
+    - `clickPower`: met twee `+10%`-upgrades is de power `1.1 * 1.1 = 1.21`. De test sluit een order met `ceil(requiredPoints / 1.21)` klikken en bewijst dat dit strikt minder klikken zijn dan `requiredPoints`.
+    - Geen negatieve balans: na elke aankoop en na drie rondes "koop alles wat koopbaar is" wordt `coins >= 0` gecontroleerd.
+  - **Let op:** één order levert te weinig munten voor twee aankopen (14 munten tegen 10 + 15), dus de flow verdient eerst meerdere orders. Dat is gameplay, geen testontkorting.
 
 ## Fase 7 — Pixel-art en visuele feedback
 
-- [ ] **T33 — Definieer de pixel-artstijl en assetpipeline (2 uur)**
+- [x] **T33 — Definieer de pixel-artstijl en assetpipeline (2 uur)**
   - **Afhankelijk van:** T05, T08, T09.
   - **Levering:** een korte `docs/visual-style.md` met charmante pixel-artrichtlijnen, palet, spritegrid, schaalregels, assetformaten en een besluit over bronbestanden versus CSS/SVG.
   - **Test/acceptatie:** maak een voorbeeldsprite en controleer die op 1x, 2x en 4x; pixelranden blijven scherp, kleuren blijven consistent en smoothing is uitgeschakeld.
+  - **Uitgevoerd:**
+    - `docs/visual-style.md` legt vast: `16 × 16` grid, vormen alleen uit `<rect>` op gehele coördinaten met getrappeerde diagonalen, geen curves en geen `stroke` in silhouetten.
+    - Schaalregels: `small` 20px, `medium` 32px, `large` 48px, altijd een geheel veelvoud van het grid.
+    - Assetbesluit: silhouetten zijn losse `.svg` omdat vorm met de hand getekend wordt; kleuren horen in TypeScript; upgrades krijgen eigen bestanden omdat geen upgrade samenvalt met item plus materiaal.
+    - `sprite-check.html` in de projectroot rendert alle 50 combinaties op 16px, 32px en 64px via dezelfde `src/sprites/sprites.ts` als de game. De pagina wordt niet meegebouwd.
+    - **Controle:** de galerij is op 16px, 32px en 64px gescreend. Pixelranden blijven scherp omdat alle vormen op gehele coördinaten staan en elke schaling een geheel veelvoud van 16 is; de kleuren per materiaal blijven over de drie schaalstappen identiek. Een eerste ronde leverde vijf onleesbare silhouetten op; de bijl, dolk, helm, harnas en speer zijn opnieuw getekend tot ze op 16px onderscheidbaar zijn van hun buren.
 
-- [ ] **T34 — Maak de pixel-artachtergrond van een middeleeuwse smidse (3 uur)**
+- [x] **T33A — Bouw het sprite-compositiesysteem voor items (3 uur)**
+  - **Afhankelijk van:** T33, T27B.
+  - **Levering:** losse SVG-bestanden per item in `src/sprites/items/`, kleurpaletten per materiaal in `src/sprites/materials.ts`, en een component `ItemSprite.vue` die een `itemId` en `materialId` combineert tot één sprite. Item bepaalt de vorm, materiaal de kleur; alle 50 combinaties zijn afgeleid, niet apart getekend.
+  - **Test/acceptatie:** een catalogustest bewijst dat elk item één silhouetbestand heeft en elk materiaal één palet, dat alle 50 combinaties renderen, dat twee items met hetzelfde materiaal dezelfde kleur maar een andere vorm hebben, en dat de schaalbaarheid bij 1x, 2x en 4x pixelranden scherp houdt.
+  - **Uitgevoerd:**
+    - `src/sprites/items/` bevat tien witte silhouetten op een `16 × 16` grid: `1-hoefijzer.svg`, `2-klinknagel.svg`, `3-pijlpunt.svg`, `4-bijl.svg`, `5-schild.svg`, `6-dolk.svg`, `7-speer.svg`, `8-zwaard.svg`, `9-helm.svg`, `10-harnas.svg`.
+    - `src/sprites/sprites.ts` koppelt elk item aan zijn silhouet en elk materiaal aan een palet van `base`, `highlight` en `shadow`. Alle vijf materialen hebben een eigen `base`-kleur en er is een neutrale `fallbackMaterialPalette` voor onbekende IDs.
+    - `ItemSprite.vue` zet het silhouet als CSS `mask-image` en vult het met `linear-gradient(160deg, highlight, base, shadow)`. De sprite is één `<span>` met `role="img"` en een `aria-label` zoals `IJzer dolken`; een onbekende `itemId` rendert een gestippelde placeholder met het label `Onbekend voorwerp`.
+    - Geïntegreerd in `OrderSelection.vue` (sprite boven de commandoregel in elke offertekaart) en `OrderTracker.vue` (sprite links van de lopende opdracht).
+    - `src/sprites/sprites.test.ts` (14 tests) bewijst dat elk item één uniek silhouet heeft, elk materiaal één palet, dat alle 50 ordercombinaties renderen, dat de vijf materialen bij één item vijf kleuren maar één vorm geven, dat de tien items bij één materiaal tien vormen maar één kleur geven, en dat de sprite reageert op propwijzigingen.
+    - `OrderComponents.test.ts` controleert dat beide componenten de sprite van de order doorgeven.
+  - **Let op:** de kleuren staan bewust in TypeScript en niet in de SVG-bestanden. De silhouetten zijn wit, zodat ze als mask dienstdoen; zo levert één bestand alle vijf kleuravarianten en hoeft er geen 50 bestanden te bestaan. Upgrades krijgen eigen losse sprites, want een upgrade valt niet samen met een item-materiaalcombinatie.
+
+- [ ] **T34 — Maak de pixel-artachtergrond van een middeleeuwse smederij (3 uur)**
   - **Afhankelijk van:** T33.
-  - **Levering:** een achtergrond met een herkenbare medieval blacksmith-setting: smidse, aambeeld, vuur/forge, houten structuren en warm licht, zonder de leesbaarheid van de UI te ondermijnen.
+  - **Levering:** een achtergrond met een herkenbare medieval blacksmith-setting: smederij, aambeeld, vuur/forge, houten structuren en warm licht, zonder de leesbaarheid van de UI te ondermijnen.
   - **Test/acceptatie:** maak screenshots op 320px en 1440px; de sfeer is duidelijk zichtbaar, de achtergrond veroorzaakt geen horizontale overflow en tekst/knoppen blijven leesbaar.
 
 - [ ] **T35 — Maak aambeeld-, hamer- en smitsesprites (3 uur)**
@@ -255,15 +317,39 @@
   - **Levering:** een confetti-achtige explosie van gouden pixel-munten die vanuit het aambeeld vertrekt bij `project-complete`; de explosie gebruikt bestaande coin-/rewarddata en herhaalt niet bij een dubbele completion-event.
   - **Test/acceptatie:** een projectvoltooiing toont één explosie met herkenbare gouden munten; een tweede event voor dezelfde `projectId` start geen tweede explosie en de tekst blijft leesbaar.
 
-- [ ] **T39 — Maak passende sprites voor upgrades (4 uur)**
+- [x] **T39 — Maak passende sprites voor upgrades (4 uur)**
   - **Afhankelijk van:** T09, T25, T33.
   - **Levering:** minimaal één herkenbare pixel-art sprite per upgrade, gekoppeld aan het `id` van de upgrade en passend bij de beschrijving en de percentagebonus `clickBonus`; voeg hover/focus/disabled varianten toe waar zinvol.
   - **Test/acceptatie:** een catalogustest controleert dat elke upgrade een sprite heeft, alle bestanden laden zonder fouten en de upgrade op desktop en mobiel herkenbaar blijft.
+  - **Uitgevoerd:**
+    - `src/sprites/upgrades/` bevat drie witte silhouetten op een `16 × 16` grid: `101-sterkere-hamer.svg` (hamer), `102-geborgen-hout.svg` (houten handvat), `103-vanur-van-de-meester.svg` (vlam).
+    - `src/sprites/sprites.ts` koppelt elke upgrade aan zijn silhouet en een eigen palet (ijzer, hout, vuur) via `getUpgradeSilhouetteUrl`, `getUpgradePalette`, `getKnownUpgradeIds` en `getUpgradeById`.
+    - `UpgradeSprite.vue` (nieuw) toont één upgrade met `role="img"` en een `aria-label` met de naam; een onbekende `upgradeId` rendert een gestippelde placeholder met het label `Onbekende upgrade`.
+    - `UpgradeItem.vue` gebruikt `UpgradeSprite` in plaats van het ✦-teken; de sprite is 2.5rem en schaalt mee op desktop en mobiel.
+    - `src/sprites/sprites.test.ts` (12 nieuwe tests) bewijst dat elke upgrade één uniek silhouet heeft, elke upgrade één palet, dat de drie upgrades drie kleuren hebben, dat de sprite reageert op propwijzigingen, dat de size-prop werkt en dat een onbekende upgrade degradeert naar een placeholder.
 
 - [ ] **T40 — Integreer de visuele effecten en toonprestaties (3 uur)**
   - **Afhankelijk van:** T30, T33–T39.
   - **Levering:** zet pixel-art, blacksmith-achtergrond, strike, vonken, coin-explosie en upgrade-sprites samen in de responsive UI; beperk animaties tot korte, efficiënte effecten en respecteer `prefers-reduced-motion`.
   - **Test/acceptatie:** handmatige controles op 320px, 768px en 1440px tonen geen clipping of flicker; met reduced motion blijven alle visuele aanwijzingen en gameplayfeedback begrijpelijk.
+
+## Fase 7b — Auto-clicker en leerling
+
+- [x] **T46 — Voeg de auto-clicker upgrade en leerling-tab toe (3 uur)**
+  - **Afhankelijk van:** T15, T16, T27.
+  - **Levering:** een eenmalige upgrade (ID 104, "Leerling") die de auto-clicker ontgrendelt; een nieuw tabblad 'leerling' met een `ApprenticePanel` die de auto-clicker-snelheid toont; een `setInterval` dat elke seconde 10% van de clickkracht toevoegt aan het actieve doel.
+  - **Test/acceptatie:** de upgrade kan slechts één keer gekocht worden; na aankoop verschijnt het leerling-tab; de auto-clicker voedt het actieve project of de actieve order; de upgrade verschijnt niet meer in de shop na aankoop.
+  - **Uitgevoerd:**
+    - `src/types/game.ts`: `Upgrade` krijgt optionele velden `autoClickerUnlocker` en `maxPurchases`; `GameState` krijgt `autoClickerUnlocked: boolean`; `createInitialGameState()` initialiseert het op `false`.
+    - `src/data/upgrades.ts`: nieuwe upgrade 104 "Leerling" met `baseCost: 50`, `costMultiplier: 1.5`, `clickBonus: 0`, `autoClickerUnlocker: true`, `maxPurchases: 1`.
+    - `src/types/ui.ts`: `GameView` krijgt `'apprentice'`; `backgroundUrlsByView` krijgt een entry voor `'apprentice'` (geen achtergrond).
+    - `src/composables/useGameState.ts`: `buyUpgrade` controleert `maxPurchases` en weigert een tweede aankoop; bij `autoClickerUnlocker` wordt `state.autoClickerUnlocked` gezet op `true`; `currentUpgradeCosts` en `affordableUpgradeIds` sluiten maxed-out upgrades uit; nieuw computed `autoClickerRate` (`clickPower * 0.1`); `startAutoClicker()` en `stopAutoClicker()` met een `setInterval` van 1000ms dat `addPoints()` aanroept; een `watch` op `autoClickerUnlocked` start/stopt de interval; beide functies geëxposeerd via `UseGameStateReturn`.
+    - `src/components/UpgradeItem.vue`: nieuw computed `isMaxPurchased`; toont "Ontgrendeld" in plaats van prijs; knop disabled met label "Ontgrendeld".
+    - `src/components/GameNavigation.vue`: nieuwe tab `{ id: 'apprentice', label: 'Leerling' }`.
+    - `src/App.vue`: `disabledViews` push `'apprentice'` zolang `autoClickerUnlocked` onwaar is; `onMounted` start de auto-clicker, `onUnmounted` stopt hem; nieuwe `ApprenticePanel` view; `defineExpose` uitgebreid.
+    - `src/components/ApprenticePanel.vue` (nieuw): presentational component met props `autoClickerRate` en `clickPower`; toont punten/sec, punten/min en een uitleg.
+    - `src/composables/gameStorage.ts`: `GameStateSnapshot` en `serializeGameState` bevatten `autoClickerUnlocked`.
+    - `src/types/gameStateNormalization.ts`: `normalizeGameState` valideert `autoClickerUnlocked` als boolean, default `false`.
 
 ## Fase 8 — Kwaliteit en oplevering
 
@@ -302,7 +388,7 @@ De game is klaar wanneer:
 - Upgradekosten exact volgens `floor(baseCost * costMultiplier ** purchaseCount)` met minimumwaarde 1 worden berekend.
 - Een reload de voortgang herstelt; corrupte of niet-beschikbare LocalStorage blokkeert gameplay niet.
 - Componenten props naar beneden en typed events naar boven gebruiken, en `App.vue` de centrale lifecycle/persistence beheert.
-- Het projecttabblad toont alleen voltooide projecten en het volgende project; de smidse toont orders zonder vereiste puntkosten.
+- Het projecttabblad toont alleen voltooide projecten en het volgende project; de smederij toont orders zonder vereiste puntkosten.
 - Alle stijlen en sprites vormen een charmante pixel-artstijl en de achtergrond heeft een middeleeuwse-smithsfeer.
 - Alleen handmatige clicks laten de hamer het aambeeld raken en vonken veroorzaken; automatische clicks veroorzaken geen hamerklap.
 - Projectvoltooiing veroorzaakt een confetti-achtige explosie van gouden munten vanuit het aambeeld en upgrades hebben passende sprites.

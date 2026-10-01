@@ -24,6 +24,8 @@ const formattedScore = computed(() => formatScore(props.points))
     <dl
       class="game-header__stats"
       aria-label="Spelstatus"
+      aria-live="polite"
+      aria-atomic="true"
     >
       <div class="game-header__stat">
         <dt>
@@ -91,6 +93,7 @@ const formattedScore = computed(() => formatScore(props.points))
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .game-header dd {
@@ -112,9 +115,10 @@ const formattedScore = computed(() => formatScore(props.points))
   }
 
   .game-header h1 {
-    max-width: 9rem;
+    max-width: none;
     font-size: 1.4rem;
     line-height: 1.1;
+    white-space: nowrap;
   }
 
   .game-header__stats {

@@ -9,6 +9,7 @@ function mountItem(overrides: Partial<{
   currentCost: number
   purchaseCount: number
   affordable: boolean
+  coins: number
 }> = {}) {
   return mount(UpgradeItem, {
     props: {
@@ -16,6 +17,7 @@ function mountItem(overrides: Partial<{
       currentCost: 10,
       purchaseCount: 0,
       affordable: true,
+      coins: 10,
       ...overrides,
     },
   })
@@ -60,6 +62,17 @@ describe('UpgradeItem', () => {
     await button.trigger('click')
 
     expect(wrapper.emitted('buy-upgrade')).toBeUndefined()
+    expect(button.attributes('aria-label')).toBe(
+      `Niet betaalbaar: ${upgrade.name} kost 10 munten`,
+    )
+  })
+
+  it('names the price in the purchase button label when affordable', () => {
+    const wrapper = mountItem()
+
+    expect(wrapper.get('.upgrade-item__button').attributes('aria-label')).toBe(
+      `Koop ${upgrade.name} voor 10 munten`,
+    )
   })
 
   it('does not emit a second request for a rapid double click', async () => {

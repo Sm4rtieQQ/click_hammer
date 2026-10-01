@@ -4,6 +4,7 @@ import { createTestGameState } from '../test/fixtures'
 import {
   GAME_STORAGE_KEY,
   loadGameState,
+  loadGameStateResult,
   saveGameState,
 } from './gameStorage'
 import type { GameStorage } from './gameStorage'
@@ -105,5 +106,60 @@ describe('safe game storage loading', () => {
 
     expect(saveGameState(createInitialGameState(), storage)).toBe(true)
     expect(values.has(GAME_STORAGE_KEY)).toBe(true)
+  })
+})
+
+describe('game load status reporting', () => {
+  it('reports fresh when nothing was stored', () => {
+    const storage: GameStorage = {
+      getItem: () => null,
+      setItem: () => undefined,
+    }
+
+    expect(loadGameStateResult(storage)).toEqual({
+      state: createInitialGameState(),
+      status: 'fresh',
+    })
+  })
+
+  it('reports restored when the stored state is already valid', () => {
+    const storage = new ReadableStorage(
+      JSON.stringify(createTestGameState({ points: 7 })),
+    )
+
+    expect(loadGameStateResult(storage)).toEqual({
+      state: createTestGameState({ points: 7 }),
+      status: 'restored',
+    })
+  })
+
+  it('reports recovered when an old save without order fields is replaced', () => {
+    const storage = new ReadableStorage(
+      JSON.stringify({ points: 4, completedProjects: [1] }),
+    )
+
+    expect(loadGameStateResult(storage)).toEqual({
+      state: createInitialGameState(),
+      status: 'recovered',
+    })
+  })
+
+  it.each(['{not valid json', JSON.stringify('corrupt')])(
+    'reports recovered for unusable stored data (%j)',
+    (serializedState) => {
+      const storage = new ReadableStorage(serializedState)
+
+      expect(loadGameStateResult(storage)).toEqual({
+        state: createInitialGameState(),
+        status: 'recovered',
+      })
+    },
+  )
+
+  it('reports unavailable when reading storage throws', () => {
+    expect(loadGameStateResult(new ThrowingStorage())).toEqual({
+      state: createInitialGameState(),
+      status: 'unavailable',
+    })
   })
 })

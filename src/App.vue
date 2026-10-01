@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { upgrades } from './data/upgrades'
+import ApprenticePanel from './components/ApprenticePanel.vue'
 import GameButton from './components/GameButton.vue'
 import GameHeader from './components/GameHeader.vue'
 import GameNavigation from './components/GameNavigation.vue'
+import GameStatusPanel from './components/GameStatusPanel.vue'
 import OrderSelection from './components/OrderSelection.vue'
 import OrderTracker from './components/OrderTracker.vue'
 import ProjectList from './components/ProjectList.vue'
 import TestControls from './components/TestControls.vue'
 import UpgradeShop from './components/UpgradeShop.vue'
-import { loadGameState } from './composables/gameStorage'
+import { loadGameStateResult } from './composables/gameStorage'
 import { useGamePersistence } from './composables/useGamePersistence'
 import { useGameState } from './composables/useGameState'
+import { getViewBackgroundUrl } from './types/ui'
 import type { GameView } from './types/ui'
 
-const initialState = loadGameState()
+const loadResult = loadGameStateResult()
 const {
   gameState,
   activeProject,
@@ -25,17 +28,62 @@ const {
   currentUpgradeCosts,
   purchaseCounts,
   affordableUpgradeIds,
+  autoClickerRate,
+  clickPower,
   addPoints,
   selectOrder,
   completeProject,
   buyUpgrade,
   resetGameState,
-} = useGameState(initialState)
+  startAutoClicker,
+  stopAutoClicker,
+} = useGameState(loadResult.state)
 
 const persistence = useGamePersistence(gameState)
+const { hasWriteError } = persistence
 const activeView = ref<GameView>('projects')
 const showTestControls = import.meta.env.DEV || import.meta.env.MODE === 'test'
 const ordersUnlocked = computed(() => completedProjectIds.value.includes(1))
+const apprenticeUnlocked = computed(() => gameState.autoClickerUnlocked)
+const disabledViews = computed<readonly GameView[]>(() => {
+  const disabled: GameView[] = []
+  if (!ordersUnlocked.value) disabled.push('smithy', 'upgrades')
+  if (!apprenticeUnlocked.value) disabled.push('apprentice')
+  return disabled
+})
+const storageNoticeDismissed = ref(false)
+const hasStorageNotice = computed(
+  () =>
+    !storageNoticeDismissed.value &&
+    (loadResult.status === 'recovered' ||
+      loadResult.status === 'unavailable' ||
+      hasWriteError.value),
+)
+const viewBackgroundUrl = computed(() => getViewBackgroundUrl(activeView.value))
+const hasViewBackground = computed(() => viewBackgroundUrl.value !== undefined)
+const viewBackgroundStyle = computed(() =>
+  viewBackgroundUrl.value === undefined
+    ? undefined
+    : { backgroundImage: `url("${viewBackgroundUrl.value}")` },
+)
+
+function dismissStorageNotice(): void {
+  storageNoticeDismissed.value = true
+}
+
+watch(disabledViews, () => {
+  if (disabledViews.value.includes(activeView.value)) {
+    activeView.value = 'projects'
+  }
+})
+
+onMounted(() => {
+  startAutoClicker()
+})
+
+onUnmounted(() => {
+  stopAutoClicker()
+})
 
 function handleProjectComplete(projectId: number): void {
   completeProject(projectId)
@@ -46,6 +94,10 @@ function handleBuyUpgrade(upgradeId: number): void {
 }
 
 function handleSelectView(view: GameView): void {
+  if (disabledViews.value.includes(view)) {
+    return
+  }
+
   activeView.value = view
 }
 
@@ -70,6 +122,8 @@ defineExpose({
   completeProject,
   buyUpgrade,
   resetGameState,
+  startAutoClicker,
+  stopAutoClicker,
 })
 </script>
 
@@ -83,12 +137,15 @@ defineExpose({
 
       <GameNavigation
         :active-view="activeView"
+        :disabled-views="disabledViews"
         @select="handleSelectView"
       />
     </div>
 
     <main
       class="app-content"
+      :class="{ 'app-content--scenery': hasViewBackground }"
+      :style="viewBackgroundStyle"
       aria-label="ClickHammer game"
     >
       <section
@@ -102,10 +159,41 @@ defineExpose({
           class="game-primary"
           aria-label="Projecten"
         >
+          <GameStatusPanel
+            v-if="hasStorageNotice"
+            class="game-notice game-notice--storage"
+            tone="warning"
+            title="Voortgang wordt niet bewaard"
+            message="De opslag van deze browser is niet beschikbaar. Het spel blijft volledig speelbaar, maar je voortgang verdwijnt zodra je het venster sluit."
+          >
+            <template #eyebrow>
+              Opslag waarschuwing
+            </template>
+            <button
+              class="game-notice__dismiss"
+              type="button"
+              @click="dismissStorageNotice"
+            >
+              Melding sluiten
+            </button>
+          </GameStatusPanel>
+
           <GameButton
             v-if="activeProject"
             @click="handleProjectClick"
           />
+
+          <GameStatusPanel
+            v-else-if="visibleProjects.length > 0"
+            class="game-notice game-notice--projects"
+            tone="info"
+            title="Alle projecten voltooid"
+            message="Je hebt elk project afgerond. Verder spelen kan via opdrachten in de smederij."
+          >
+            <template #eyebrow>
+              Klaar
+            </template>
+          </GameStatusPanel>
 
           <ProjectList
             :projects="visibleProjects"
@@ -126,26 +214,9 @@ defineExpose({
       >
         <section
           class="game-primary"
-          aria-label="Smidse"
+          aria-label="Smederij"
         >
-          <section
-            v-if="!ordersUnlocked"
-            class="panel game-gate"
-            aria-labelledby="first-project-gate-title"
-          >
-            <p class="game-gate__eyebrow">
-              Eerste stap
-            </p>
-            <h2 id="first-project-gate-title">
-              Herstel eerst het aambeeld
-            </h2>
-            <p>
-              Voltooi het eerste project op het projecttabblad om opdrachten te
-              ontgrendelen.
-            </p>
-          </section>
-
-          <template v-else-if="activeOrder">
+          <template v-if="activeOrder">
             <GameButton @click="handleOrderClick" />
             <OrderTracker :order="activeOrder" />
           </template>
@@ -159,7 +230,7 @@ defineExpose({
       </section>
 
       <section
-        v-else
+        v-else-if="activeView === 'upgrades'"
         id="game-panel-upgrades"
         class="game-view"
         role="tabpanel"
@@ -171,7 +242,21 @@ defineExpose({
           :purchase-counts="purchaseCounts"
           :current-costs="currentUpgradeCosts"
           :affordable-upgrade-ids="affordableUpgradeIds"
+          :show-dev-upgrades="showTestControls"
           @buy-upgrade="handleBuyUpgrade"
+        />
+      </section>
+
+      <section
+        v-else
+        id="game-panel-apprentice"
+        class="game-view"
+        role="tabpanel"
+        aria-labelledby="game-tab-apprentice"
+      >
+        <ApprenticePanel
+          :auto-clicker-rate="autoClickerRate"
+          :click-power="clickPower"
         />
       </section>
     </main>
@@ -196,6 +281,62 @@ defineExpose({
   margin-bottom: var(--space-3);
 }
 
+/*
+ * Achtergrondscène. De laag zit achter de panelen en krijgt een donkere
+ * sluier, zodat tekst en knoppen bovenop de tekening leesbaar blijven.
+ */
+/*
+ * Achtergrondscène. De tekening vult de hele container en krijgt een donkere
+ * sluier, zodat tekst en knoppen erboven leesbaar blijven. De sluier zit op
+ * een laag onder de inhoud; niet erin, want dan dimt het paneel mee.
+ *
+ * De container is geen grid met `align-items: start`, want dan groeit de
+ * tekening mee met de hoogte van de inhoud in plaats van een vast venster te
+ * blijven. De panelen houden hun eigen hoogte.
+ */
+.app-content--scenery {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  min-height: min(75vh, 34rem);
+  max-width: calc(var(--content-max-width) + 2 * var(--space-6));
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--panel-radius);
+  background-color: var(--color-background);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: cover;
+}
+
+/*
+ * De sluier bedekt precies de scène en ligt op een laag onder de inhoud, niet
+ * erbovenop: anders dimt het paneel mee. Gebruik ook geen negatieve inset;
+ * pseudo-elementen tellen niet mee in een overflowmeting, waardoor zo'n
+ * overhang stilletjes horizontale scroll oplevert zonder dat een element ervan
+ * schuldig lijkt.
+ */
+.app-content--scenery::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgb(27 17 16 / 70%) 0%,
+      rgb(27 17 16 / 62%) 45%,
+      rgb(27 17 16 / 80%) 100%
+    );
+  content: '';
+  pointer-events: none;
+}
+
+.app-content--scenery > .game-view {
+  position: relative;
+  align-self: center;
+}
+
 .game-view {
   width: min(100%, var(--content-max-width));
 }
@@ -213,23 +354,28 @@ defineExpose({
   justify-self: center;
 }
 
-.game-gate {
-  width: 100%;
-  text-align: center;
+.game-notice {
+  text-align: left;
 }
 
-.game-gate__eyebrow {
-  margin-bottom: var(--space-2);
-  color: var(--color-focus);
-  font-size: 0.75rem;
+.game-notice__dismiss {
+  min-height: var(--control-min-height);
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 0.6rem;
+  color: var(--color-text);
+  background: rgb(255 255 255 / 8%);
+  cursor: pointer;
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
-.game-gate h2 {
-  margin-bottom: var(--space-3);
+.game-notice__dismiss:hover {
+  background: rgb(255 255 255 / 14%);
 }
+
+
 
 @media (max-width: 48rem) {
   .game-topbar {
@@ -238,6 +384,11 @@ defineExpose({
 
   .game-topbar .game-header {
     margin-bottom: var(--space-2);
+  }
+
+  .app-content--scenery {
+    max-width: 100%;
+    padding: var(--space-4) var(--space-3);
   }
 }
 </style>

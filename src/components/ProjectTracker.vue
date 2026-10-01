@@ -165,7 +165,7 @@ watch(
   min-width: 0;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--color-accent), var(--color-focus));
-  transition: width 180ms ease;
+  transition: width var(--transition-medium);
 }
 
 .project-tracker__percentage {

@@ -2,6 +2,17 @@ import eslint from '@eslint/js'
 import vue from 'eslint-plugin-vue'
 import tseslint from 'typescript-eslint'
 
+const browserGlobals = {
+  document: 'readonly',
+  window: 'readonly',
+  navigator: 'readonly',
+  HTMLElement: 'readonly',
+  HTMLButtonElement: 'readonly',
+  HTMLDivElement: 'readonly',
+  KeyboardEvent: 'readonly',
+  Event: 'readonly',
+}
+
 export default [
   {
     ignores: ['coverage/**', 'dist/**', 'node_modules/**'],
@@ -12,6 +23,7 @@ export default [
   {
     files: ['**/*.{ts,vue}'],
     languageOptions: {
+      globals: browserGlobals,
       parserOptions: {
         ecmaVersion: 'latest',
         parser: tseslint.parser,

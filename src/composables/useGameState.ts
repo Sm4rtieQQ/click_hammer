@@ -1,4 +1,5 @@
-import { computed, reactive, readonly } from 'vue'
+import { computed, reactive, readonly, watch } from 'vue'
+import { getCurrentScope, onScopeDispose } from 'vue'
 import type { ComputedRef, DeepReadonly } from 'vue'
 import { createOfferedOrders } from '../data/orders'
 import { projects } from '../data/projects'
@@ -12,6 +13,13 @@ import {
 import type { ProgressTarget } from '../types/ui'
 
 const baseClickPower = 1
+
+/**
+ * De leerling levert per seconde een fractie van de huidige clickkracht.
+ */
+export const autoClickerShare = 0.1
+const autoClickerIntervalMs = 1000
+
 const projectById = new Map<number, Project>()
 const upgradeById = new Map<number, Upgrade>()
 
@@ -67,6 +75,7 @@ export function getUpgradeCost(
 export interface UseGameStateReturn {
   readonly gameState: DeepReadonly<GameState>
   readonly clickPower: ComputedRef<number>
+  readonly autoClickerRate: ComputedRef<number>
   readonly currentUpgradeCosts: ComputedRef<Record<number, number>>
   readonly purchaseCounts: ComputedRef<Record<number, number>>
   readonly affordableUpgradeIds: ComputedRef<ReadonlySet<number>>
@@ -82,6 +91,8 @@ export interface UseGameStateReturn {
   readonly completeProject: (projectId: number) => void
   readonly buyUpgrade: (id: number) => void
   readonly resetGameState: () => void
+  readonly startAutoClicker: () => void
+  readonly stopAutoClicker: () => void
 }
 
 export function useGameState(
@@ -172,13 +183,22 @@ export function useGameState(
       state.activeOrder === null ? 'project' : 'order'
     )
     const clickPower = calculateClickPower(getPurchasedUpgrades())
-    const nextPoints = state.points + clickPower
 
-    if (!Number.isFinite(clickPower) || !Number.isFinite(nextPoints)) {
+    applyPoints(resolvedTarget, clickPower)
+  }
+
+  /**
+   * Voegt `amount` punten toe aan het gekozen doel. `addPoints` gebruikt dit
+   * met de volledige clickkracht; de leerling met een fractie daarvan.
+   */
+  function applyPoints(target: ProgressTarget, amount: number): void {
+    const nextPoints = state.points + amount
+
+    if (!Number.isFinite(amount) || !Number.isFinite(nextPoints)) {
       return
     }
 
-    if (resolvedTarget === 'order') {
+    if (target === 'order') {
       const order = state.activeOrder
 
       if (order === null) {
@@ -187,7 +207,7 @@ export function useGameState(
 
       const nextProgress = Math.min(
         order.requiredPoints,
-        order.progress + clickPower,
+        order.progress + amount,
       )
       state.points = nextPoints
       state.activeOrder = { ...order, progress: nextProgress }
@@ -199,7 +219,7 @@ export function useGameState(
       return
     }
 
-    if (resolvedTarget === 'project') {
+    if (target === 'project') {
       const project = getActiveProject()
 
       if (project === undefined) {
@@ -209,7 +229,7 @@ export function useGameState(
       const currentProgress = state.projectProgress[project.id] ?? 0
       const nextProgress = Math.min(
         project.requiredPoints,
-        currentProgress + clickPower,
+        currentProgress + amount,
       )
       state.points = nextPoints
       state.projectProgress[project.id] = nextProgress
@@ -280,6 +300,12 @@ export function useGameState(
     const purchaseCount = state.upgrades.filter(
       (upgradeId) => upgradeId === id,
     ).length
+    const maxPurchases = upgrade.maxPurchases ?? Infinity
+
+    if (purchaseCount >= maxPurchases) {
+      return
+    }
+
     const currentCost = getUpgradeCost(upgrade, purchaseCount)
 
     if (currentCost > state.coins) {
@@ -288,6 +314,10 @@ export function useGameState(
 
     state.coins -= currentCost
     state.upgrades.push(id)
+
+    if (upgrade.autoClickerUnlocker === true) {
+      state.autoClickerUnlocked = true
+    }
   }
 
   function resetGameState(): void {
@@ -304,7 +334,13 @@ export function useGameState(
       const purchaseCount = state.upgrades.filter(
         (upgradeId) => upgradeId === upgrade.id,
       ).length
-      costs[upgrade.id] = getUpgradeCost(upgrade, purchaseCount)
+      const maxPurchases = upgrade.maxPurchases ?? Infinity
+
+      if (purchaseCount >= maxPurchases) {
+        costs[upgrade.id] = Number.MAX_SAFE_INTEGER
+      } else {
+        costs[upgrade.id] = getUpgradeCost(upgrade, purchaseCount)
+      }
     }
 
     return costs
@@ -324,9 +360,13 @@ export function useGameState(
     () =>
       new Set(
         upgrades
-          .filter(
-            ({ id }) => state.coins >= currentUpgradeCosts.value[id],
-          )
+          .filter(({ id, maxPurchases }) => {
+            const purchaseCount = state.upgrades.filter(
+              (upgradeId) => upgradeId === id,
+            ).length
+            const limit = maxPurchases ?? Infinity
+            return purchaseCount < limit && state.coins >= currentUpgradeCosts.value[id]
+          })
           .map(({ id }) => id),
       ),
   )
@@ -362,10 +402,57 @@ export function useGameState(
   const activeOrder = computed<DeepReadonly<WorkOrder> | null>(
     () => state.activeOrder,
   )
+  const autoClickerRate = computed(() => clickPower.value * autoClickerShare)
+
+  let autoClickerIntervalId: ReturnType<typeof setInterval> | null = null
+
+  function stopAutoClicker(): void {
+    if (autoClickerIntervalId !== null) {
+      clearInterval(autoClickerIntervalId)
+      autoClickerIntervalId = null
+    }
+  }
+
+  function startAutoClicker(): void {
+    if (!state.autoClickerUnlocked || autoClickerIntervalId !== null) {
+      return
+    }
+
+    autoClickerIntervalId = setInterval(() => {
+      // De leerling voedt hetzelfde doel als een handmatige klik: de actieve
+      // order wanneer die er is, anders het actieve project.
+      const target: ProgressTarget =
+        state.activeOrder === null ? 'project' : 'order'
+
+      applyPoints(target, autoClickerRate.value)
+    }, autoClickerIntervalMs)
+
+    /*
+     * Buiten een component scope (een losse unit test bijvoorbeeld) blijft de
+     * interval bestaan tot `stopAutoClicker` wordt aangeroepen. Binnen een
+     * scope ruimt `onScopeDispose` hem automatisch op, zodat een unmount nooit
+     * een timer laat hangen.
+     */
+    if (getCurrentScope() !== undefined) {
+      onScopeDispose(stopAutoClicker)
+    }
+  }
+
+  watch(
+    () => state.autoClickerUnlocked,
+    (unlocked) => {
+      if (unlocked) {
+        startAutoClicker()
+      } else {
+        stopAutoClicker()
+      }
+    },
+  )
 
   return {
     gameState,
     clickPower,
+    autoClickerRate,
     currentUpgradeCosts,
     purchaseCounts,
     affordableUpgradeIds,
@@ -381,5 +468,7 @@ export function useGameState(
     completeProject,
     buyUpgrade,
     resetGameState,
+    startAutoClicker,
+    stopAutoClicker,
   }
 }

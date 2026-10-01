@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { formatOrderCommand } from '../data/orders'
 import type { WorkOrder } from '../types/game'
+import ItemSprite from './ItemSprite.vue'
 
 const props = defineProps<{
   order: WorkOrder
@@ -53,6 +54,11 @@ const progressLabel = computed(
     aria-labelledby="order-tracker-title"
   >
     <div class="order-tracker__heading">
+      <ItemSprite
+        :item-id="order.itemId"
+        :material-id="order.materialId"
+        class="order-tracker__sprite"
+      />
       <div>
         <p class="order-tracker__eyebrow">
           Lopende opdracht
@@ -132,6 +138,10 @@ const progressLabel = computed(
   font-size: clamp(1.3rem, 3vw, 1.8rem);
 }
 
+.order-tracker__sprite {
+  align-self: center;
+}
+
 .order-tracker__reward {
   flex: 0 0 auto;
   color: var(--color-focus);
@@ -186,7 +196,7 @@ const progressLabel = computed(
 .order-tracker__total-bar-fill {
   height: 100%;
   border-radius: inherit;
-  transition: width 180ms ease;
+  transition: width var(--transition-medium);
 }
 
 .order-tracker__item-bar-fill {

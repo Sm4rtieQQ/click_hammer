@@ -25,4 +25,23 @@ export const upgrades: Upgrade[] = [
     costMultiplier: 1.75,
     clickBonus: 25,
   },
+  {
+    id: 104,
+    name: 'Leerling',
+    description: 'Een leerling die voor je klikt: +10% van je clickkracht per seconde.',
+    baseCost: 50,
+    costMultiplier: 1.5,
+    clickBonus: 0,
+    autoClickerUnlocker: true,
+    maxPurchases: 1,
+  },
+  {
+    id: 105,
+    name: 'Ontwikkelaarskracht',
+    description: 'Alleen beschikbaar tijdens development en tests.',
+    baseCost: 1,
+    costMultiplier: 1.5,
+    clickBonus: 2000,
+    devOnly: true,
+  },
 ]

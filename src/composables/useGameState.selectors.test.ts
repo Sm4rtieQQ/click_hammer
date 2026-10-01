@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { createTestGameState } from '../test/fixtures'
 import { useGameState } from './useGameState'
 
+/**
+ * De dev-only upgrade 105 kost 1 munt en is daardoor altijd betaalbaar. Deze
+ * helper houdt de betaalbaarheidsasserties op de echte catalogusupgrades.
+ */
+function buyableUpgrades(affordableIds: ReadonlySet<number>): number[] {
+  return [...affordableIds].filter((id) => id !== 105).sort((a, b) => a - b)
+}
+
 describe('game state selectors', () => {
   it('exposes the initial derived values', () => {
     const {
@@ -23,8 +31,16 @@ describe('game state selectors', () => {
       101: 10,
       102: 20,
       103: 40,
+      104: 50,
+      105: 1,
     })
-    expect(purchaseCounts.value).toEqual({ 101: 0, 102: 0, 103: 0 })
+    expect(purchaseCounts.value).toEqual({
+      101: 0,
+      102: 0,
+      103: 0,
+      104: 0,
+      105: 0,
+    })
     expect(affordableUpgradeIds.value).toEqual(new Set())
     expect(completedProjectIds.value).toEqual([])
     expect(activeProject.value?.id).toBe(1)
@@ -53,13 +69,13 @@ describe('game state selectors', () => {
     expect(gameState.upgrades).toEqual([101])
     expect(clickPower.value).toBeCloseTo(1.1, 12)
     expect(currentUpgradeCosts.value[101]).toBe(15)
-    expect(affordableUpgradeIds.value).toEqual(new Set([101]))
+    expect(buyableUpgrades(affordableUpgradeIds.value)).toEqual([101])
 
     buyUpgrade(101)
 
     expect(clickPower.value).toBeCloseTo(1.21, 12)
     expect(currentUpgradeCosts.value[101]).toBe(22)
-    expect(affordableUpgradeIds.value).toEqual(new Set())
+    expect(buyableUpgrades(affordableUpgradeIds.value)).toEqual([])
   })
 
   it('reacts when a purchase changes both coins and the next cost', () => {
@@ -67,11 +83,11 @@ describe('game state selectors', () => {
       createTestGameState({ coins: 20 }),
     )
 
-    expect(affordableUpgradeIds.value).toEqual(new Set([101, 102]))
+    expect(buyableUpgrades(affordableUpgradeIds.value)).toEqual([101, 102])
 
     buyUpgrade(101)
 
-    expect(affordableUpgradeIds.value).toEqual(new Set())
+    expect(buyableUpgrades(affordableUpgradeIds.value)).toEqual([])
   })
 
   it('derives completed projects and remaining project goals', () => {

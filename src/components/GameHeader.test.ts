@@ -16,11 +16,25 @@ describe('GameHeader', () => {
     expect(wrapper.element.tagName).toBe('HEADER')
     expect(wrapper.get('h1').text()).toBe('ClickHammer')
     expect(wrapper.find('.game-header__eyebrow').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('Sla de smidse op')
+    expect(wrapper.text()).not.toContain('Sla de smederij op')
     expect(terms.map((term) => term.text())).toEqual(['Score', 'Munten'])
     expect(values.map((value) => value.text())).toEqual(['0', '0'])
     expectTypeOf(wrapper.props('points')).toEqualTypeOf<number>()
     expectTypeOf(wrapper.props('coins')).toEqualTypeOf<number>()
+  })
+
+  it('announces score and coin changes through a polite live region', () => {
+    const wrapper = mount(GameHeader, {
+      props: {
+        points: 0,
+        coins: 0,
+      },
+    })
+    const stats = wrapper.get('.game-header__stats')
+
+    expect(stats.attributes('aria-live')).toBe('polite')
+    expect(stats.attributes('aria-atomic')).toBe('true')
+    expect(stats.attributes('aria-label')).toBe('Spelstatus')
   })
 
   it('updates score and coins reactively through props', async () => {

@@ -61,7 +61,7 @@ function handleReset(): void {
 
 .test-controls__button {
   flex: 0 0 auto;
-  min-height: 2.75rem;
+  min-height: var(--control-min-height);
   padding: var(--space-2) var(--space-4);
   border: 1px solid rgb(255 209 102 / 45%);
   border-radius: 0.6rem;
@@ -69,10 +69,15 @@ function handleReset(): void {
   background: rgb(255 209 102 / 10%);
   cursor: pointer;
   font-weight: 800;
+  transition: background var(--transition-fast);
 }
 
 .test-controls__button:hover {
   background: rgb(255 209 102 / 18%);
+}
+
+.test-controls__button:active {
+  background: rgb(255 209 102 / 24%);
 }
 
 @media (max-width: 36rem) {

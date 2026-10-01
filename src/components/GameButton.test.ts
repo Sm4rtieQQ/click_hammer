@@ -61,4 +61,12 @@ describe('GameButton', () => {
 
     expect(wrapper.emitted('click')).toBeUndefined()
   })
+
+  it('hides the decorative hammer glyph from assistive technology', () => {
+    const wrapper = mount(GameButton)
+
+    expect(wrapper.get('.game-button__hammer').attributes('aria-hidden')).toBe(
+      'true',
+    )
+  })
 })

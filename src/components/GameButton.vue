@@ -33,6 +33,7 @@ function handleKeydown(event: KeyboardActivationEvent): void {
     return
   }
 
+  // Een native button genereert zelf een click-event; voorkom dubbele activatie.
   event.preventDefault()
 
   if (!event.repeat) {
@@ -64,7 +65,7 @@ function handleKeydown(event: KeyboardActivationEvent): void {
   align-items: center;
   justify-content: center;
   gap: var(--space-3);
-  min-width: min(100%, 18rem);
+  width: min(100%, 18rem);
   min-height: 4rem;
   padding: var(--space-3) var(--space-5);
   border: 2px solid rgb(255 255 255 / 18%);
@@ -81,9 +82,9 @@ function handleKeydown(event: KeyboardActivationEvent): void {
   touch-action: manipulation;
   user-select: none;
   transition:
-    transform 100ms ease,
-    box-shadow 100ms ease,
-    filter 100ms ease;
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    filter var(--transition-fast);
 }
 
 .game-button:hover:not(:disabled) {

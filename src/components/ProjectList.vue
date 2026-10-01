@@ -44,7 +44,18 @@ function isCompleted(projectId: number): boolean {
       Projecten
     </h2>
 
-    <div class="project-list__items">
+    <p
+      v-if="visibleProjects.length === 0"
+      class="project-list__empty"
+      role="status"
+    >
+      Er zijn geen projecten beschikbaar. Je huidige voortgang blijft behouden.
+    </p>
+
+    <div
+      v-else
+      class="project-list__items"
+    >
       <article
         v-for="project in visibleProjects"
         :key="project.id"
@@ -115,6 +126,14 @@ function isCompleted(projectId: number): boolean {
   margin-bottom: var(--space-4);
 }
 
+.project-list__empty {
+  padding: var(--space-5) var(--space-4);
+  border: 1px dashed rgb(255 255 255 / 18%);
+  border-radius: var(--panel-radius);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .project-list__items {
   display: grid;
   gap: var(--space-3);
@@ -122,6 +141,10 @@ function isCompleted(projectId: number): boolean {
 
 .project-list__item {
   padding: var(--space-4);
+}
+
+.project-list__item:hover:not(.project-list__item--locked) {
+  border-color: rgb(255 209 102 / 35%);
 }
 
 .project-list__item--completed {

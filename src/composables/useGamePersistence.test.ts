@@ -183,12 +183,29 @@ describe('useGamePersistence', () => {
     storage.throwOnWrite = true
     const { game, persistence } = mountPersistence(storage)
 
+    expect(persistence.hasWriteError.value).toBe(false)
+
     game.addPoints()
     await nextTick()
     vi.advanceTimersByTime(100)
 
     expect(game.gameState.points).toBe(1)
+    expect(persistence.hasWriteError.value).toBe(true)
     expect(() => persistence.saveNow()).not.toThrow()
     expect(persistence.saveNow()).toBe(false)
+  })
+
+  it('clears the write error once storage works again', async () => {
+    const storage = new FakeStorage()
+    storage.throwOnWrite = true
+    const { persistence } = mountPersistence(storage)
+
+    expect(persistence.saveNow()).toBe(false)
+    expect(persistence.hasWriteError.value).toBe(true)
+
+    storage.throwOnWrite = false
+
+    expect(persistence.saveNow()).toBe(true)
+    expect(persistence.hasWriteError.value).toBe(false)
   })
 })

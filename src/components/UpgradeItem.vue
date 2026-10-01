@@ -1,19 +1,30 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import type { Upgrade } from '../types/game'
+import UpgradeSprite from './UpgradeSprite.vue'
 
 const props = defineProps<{
   upgrade: Upgrade
   currentCost: number
   purchaseCount: number
   affordable: boolean
+  coins: number
 }>()
+
+const isMaxPurchased = computed(() => {
+  const max = props.upgrade.maxPurchases ?? Infinity
+  return props.purchaseCount >= max
+})
 
 const emit = defineEmits<{
   'buy-upgrade': [upgradeId: number]
 }>()
 
 const isPurchasePending = ref(false)
+
+const missingCoins = computed(() =>
+  Math.max(0, props.currentCost - props.coins),
+)
 
 function handleBuy(): void {
   if (!props.affordable || isPurchasePending.value) {
@@ -34,12 +45,10 @@ function handleBuy(): void {
     :class="{ 'upgrade-item--purchased': purchaseCount > 0 }"
   >
     <div class="upgrade-item__content">
-      <div
-        class="upgrade-item__icon"
-        aria-hidden="true"
-      >
-        ✦
-      </div>
+      <UpgradeSprite
+        :upgrade-id="upgrade.id"
+        size="medium"
+      />
       <div class="upgrade-item__details">
         <div class="upgrade-item__heading">
           <h3>{{ upgrade.name }}</h3>
@@ -55,7 +64,18 @@ function handleBuy(): void {
         </p>
         <ul class="upgrade-item__facts">
           <li>+{{ upgrade.clickBonus }}% clickkracht</li>
-          <li>{{ currentCost }} munten</li>
+          <li v-if="isMaxPurchased">
+            Ontgrendeld
+          </li>
+          <li v-else>
+            {{ currentCost }} munten
+          </li>
+          <li
+            v-if="!affordable && !isMaxPurchased"
+            class="upgrade-item__facts-missing"
+          >
+            Nog {{ missingCoins }} munten nodig
+          </li>
         </ul>
       </div>
     </div>
@@ -63,12 +83,18 @@ function handleBuy(): void {
     <button
       class="upgrade-item__button"
       type="button"
-      :disabled="!affordable || isPurchasePending"
-      :aria-disabled="!affordable || isPurchasePending ? 'true' : undefined"
-      :aria-label="`Koop ${upgrade.name}`"
+      :disabled="!affordable || isPurchasePending || isMaxPurchased"
+      :aria-disabled="!affordable || isPurchasePending || isMaxPurchased ? 'true' : undefined"
+      :aria-label="
+        isMaxPurchased
+          ? `${upgrade.name} is ontgrendeld`
+          : affordable
+            ? `Koop ${upgrade.name} voor ${currentCost} munten`
+            : `Niet betaalbaar: ${upgrade.name} kost ${currentCost} munten`
+      "
       @click="handleBuy"
     >
-      {{ affordable ? 'Koop upgrade' : 'Niet betaalbaar' }}
+      {{ isMaxPurchased ? 'Ontgrendeld' : (affordable ? 'Koop upgrade' : 'Niet betaalbaar') }}
     </button>
   </article>
 </template>
@@ -81,6 +107,10 @@ function handleBuy(): void {
   gap: var(--space-4);
   width: 100%;
   padding: var(--space-4);
+}
+
+.upgrade-item:hover:not(.upgrade-item--purchased) {
+  border-color: rgb(255 209 102 / 35%);
 }
 
 .upgrade-item--purchased {
@@ -105,6 +135,12 @@ function handleBuy(): void {
   color: var(--color-focus);
   background: rgb(255 209 102 / 10%);
   font-size: 1.35rem;
+}
+
+.upgrade-item .upgrade-sprite {
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .upgrade-item__details {
@@ -159,9 +195,13 @@ function handleBuy(): void {
   content: '◆';
 }
 
+.upgrade-item__facts .upgrade-item__facts-missing::before {
+  content: '◇';
+}
+
 .upgrade-item__button {
   flex: 0 0 auto;
-  min-height: 2.75rem;
+  min-height: var(--control-min-height);
   padding: var(--space-2) var(--space-3);
   border: 1px solid rgb(255 255 255 / 18%);
   border-radius: 0.6rem;
@@ -171,8 +211,8 @@ function handleBuy(): void {
   font-size: 0.85rem;
   font-weight: 800;
   transition:
-    filter 100ms ease,
-    transform 100ms ease;
+    filter var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .upgrade-item__button:hover:not(:disabled) {
@@ -180,11 +220,15 @@ function handleBuy(): void {
   transform: translateY(-1px);
 }
 
+.upgrade-item__button:active:not(:disabled) {
+  transform: translateY(0.1rem);
+}
+
 .upgrade-item__button:disabled {
   color: var(--color-text-muted);
   background: var(--color-surface-raised);
   cursor: not-allowed;
-  opacity: 0.65;
+  opacity: 0.85;
 }
 
 @media (max-width: 36rem) {
