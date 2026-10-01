@@ -300,7 +300,7 @@ defineExpose({
   display: grid;
   justify-items: center;
   min-height: min(75vh, 34rem);
-  max-width: calc(var(--content-max-width) + 2 * var(--space-6));
+  max-width: 100%;
   padding: var(--space-5) var(--space-6);
   border-radius: var(--panel-radius);
   background-color: var(--color-background);
