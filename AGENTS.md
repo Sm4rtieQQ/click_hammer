@@ -7,7 +7,7 @@ Doel: snel groeien, meer punten per klik produceren en alle projecten, opdrachte
 ## Componentarchitectuur
 - `App.vue`: layout, views, lifecycle en persistence; geeft state en acties via props aan child components.
 - `GameHeader.vue`: toont score en munten; project- en ordertellers zijn hier niet zichtbaar.
-- `GameNavigation.vue`: desktop-tabs en mobiel menu voor Projecten, Smederij en Upgrades; geblokkeerde views komen via de prop `disabledViews` en zijn semantisch disabled.
+- `GameNavigation.vue`: desktop-tabs en mobiel menu voor Projecten, Smederij, Upgrades en Leerling; geblokkeerde views komen via de prop `disabledViews` en zijn semantisch disabled.
 - `GameButton.vue`: klikfeedback en `click`-event; de parent bepaalt of een project of order wordt gevorderd.
 - `ProjectList.vue`: toont alleen voltooide projecten en het eerstvolgende project.
 - `ProjectTracker.vue`: toont voortgang en voltooit één project aan de grens.
@@ -16,8 +16,9 @@ Doel: snel groeien, meer punten per klik produceren en alle projecten, opdrachte
 - `UpgradeShop.vue`: toont beschikbare upgrades en verwerkt aankopen; `buy-upgrade` gaat naar `App.vue`.
 - `UpgradeItem.vue`: toont één upgrade met prijs en koopstatus; `buy-upgrade` gaat naar `UpgradeShop.vue`.
 - `GameStatusPanel.vue`: één presentational paneel voor info-, warning- en errorstates; `info` is een `role="status"`, de andere tonen een `role="alert"`.
+- `ApprenticePanel.vue`: toont de ontgrendelde leerling met de huidige punten per seconde en per minuut; presentational, props naar beneden.
 - `ItemSprite.vue`: composeert één sprite uit een `itemId` en `materialId`; het item bepaalt de vorm, het materiaal de kleur. `src/sprites/sprites.ts` koppelt items aan silhouetten en materialen aan paletten.
-- `useGameState.ts`: centrale, reactieve gameplay-, project-, order- en upgrade-logica.
+- `useGameState.ts`: centrale, reactieve gameplay-, project-, order-, upgrade- en auto-clicker-logica.
 
 ## TypeScript-interfaces
 ```ts
@@ -34,6 +35,7 @@ interface GameState {
   upgrades: number[]; projectProgress: Record<number, number>
   completedOrderCount: number; nextOrderId: number
   offeredOrders: WorkOrder[]; activeOrder: WorkOrder | null
+  autoClickerUnlocked: boolean
 }
 ```
 
@@ -56,6 +58,9 @@ interface GameState {
 - De vereiste punten van een order zijn intern, maar niet zichtbaar in `OrderSelection` of `OrderTracker`.
 - Upgradekosten: `floor(baseCost * costMultiplier^purchaseCount)`, met een geldige minimumwaarde van 1.
 - `clickBonus` is een percentage-multiplier: `clickPower` wordt berekend als `baseClickPower * product(1 + clickBonus / 100)`.
+- De upgrade `Leerling` (ID 104) is eenmalig: `maxPurchases: 1`. Na aankoop staat hij op 'ontgrendeld' en kan hij niet opnieuw worden gekocht. Extra upgrades voor de leerling zijn er niet.
+- De leerling levert `autoClickerShare` (10%) van de huidige `clickPower` per seconde en voedt hetzelfde doel als een handmatige klik: de actieve order, anders het actieve project. Dat loopt via `setInterval` in `useGameState`; gebruik `applyPoints(target, amount)` en niet `addPoints()`, want die rekent met de volledige clickkracht.
+- De view heet `Leerling` en heeft id `apprentice`. Zolang `autoClickerUnlocked` onwaar is, is dat tabblad disabled via `disabledViews`.
 - De view heet `Smederij` (niet `Smidse`) en heeft id `smithy`.
 - Tijdens `Herstel het aambeeld` (dus zolang project 1 niet voltooid is) zijn `Smederij` en `Upgrades` disabled; `App.vue` levert dat via `disabledViews` en `GameNavigation.vue` rendert semantisch disabled knoppen.
 - Alle tekst is niet-selecteerbaar: `body` heeft `user-select: none` in `src/styles/main.css`.
