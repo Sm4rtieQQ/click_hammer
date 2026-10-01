@@ -102,11 +102,11 @@ function handleSelectView(view: GameView): void {
 }
 
 function handleProjectClick(): void {
-  addPoints('project')
+  addPoints('project', 'manual')
 }
 
 function handleOrderClick(): void {
-  addPoints('order')
+  addPoints('order', 'manual')
 }
 
 function handleReset(): void {

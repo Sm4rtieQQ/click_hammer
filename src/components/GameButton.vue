@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 interface KeyboardActivationEvent {
   readonly key: string
   readonly repeat: boolean
@@ -18,10 +20,20 @@ const emit = defineEmits<{
   click: []
 }>()
 
+/**
+ * Elke handmatige activatie verhoogt deze teller. De hamer-animatie hangt
+ * hieraan in plaats van aan `:active`, zodat de korte slag zichtbaar blijft
+ * ook na een snelle klik en zodat alleen een echte klik de hamer beweegt.
+ */
+const strikeCount = ref(0)
+
 function activate(): void {
-  if (!props.disabled) {
-    emit('click')
+  if (props.disabled) {
+    return
   }
+
+  strikeCount.value += 1
+  emit('click')
 }
 
 function handleClick(): void {
@@ -48,11 +60,14 @@ function handleKeydown(event: KeyboardActivationEvent): void {
     type="button"
     :disabled="disabled"
     :aria-disabled="disabled ? 'true' : undefined"
+    :data-strike-count="strikeCount"
     @click="handleClick"
     @keydown="handleKeydown"
   >
     <span
+      :key="strikeCount"
       class="game-button__hammer"
+      :class="{ 'game-button__hammer--striking': strikeCount > 0 }"
       aria-hidden="true"
     >⚒</span>
     <span>Sla op het aambeeld</span>
@@ -113,7 +128,13 @@ function handleKeydown(event: KeyboardActivationEvent): void {
   transform-origin: 75% 75%;
 }
 
-.game-button:active:not(:disabled) .game-button__hammer {
+/*
+ * De slag herstart doordat de teller de `key` van de span verandert. Zo is
+ * elke handmatige klik zichtbaar, ook een snelle klik waarbij `:active` al
+ * weg is. Alleen een handmatige activatie verhoogt de teller, dus de leerling
+ * beweegt de hamer nooit.
+ */
+.game-button__hammer--striking {
   animation: game-button-strike 140ms ease-out;
 }
 

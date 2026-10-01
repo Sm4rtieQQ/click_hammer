@@ -8,7 +8,7 @@ Doel: snel groeien, meer punten per klik produceren en alle projecten, opdrachte
 - `App.vue`: layout, views, lifecycle en persistence; geeft state en acties via props aan child components.
 - `GameHeader.vue`: toont score en munten; project- en ordertellers zijn hier niet zichtbaar.
 - `GameNavigation.vue`: desktop-tabs en mobiel menu voor Projecten, Smederij, Upgrades en Leerling; geblokkeerde views komen via de prop `disabledViews` en zijn semantisch disabled.
-- `GameButton.vue`: klikfeedback en `click`-event; de parent bepaalt of een project of order wordt gevorderd.
+- `GameButton.vue`: klikfeedback en `click`-event; de parent bepaalt of een project of order wordt gevorderd. De hamer-slaganimatie hangt aan een `strikeCount` die alleen bij een handmatige activatie oploopt, nooit aan `:active`; de teller staat als `data-strike-count` op de knop.
 - `ProjectList.vue`: toont alleen voltooide projecten en het eerstvolgende project.
 - `ProjectTracker.vue`: toont voortgang en voltooit één project aan de grens.
 - `OrderSelection.vue`: toont twee offertes en emiteert `select` voor één opdracht.
@@ -60,6 +60,9 @@ interface GameState {
 - `clickBonus` is een percentage-multiplier: `clickPower` wordt berekend als `baseClickPower * product(1 + clickBonus / 100)`.
 - De upgrade `Leerling` (ID 104) is eenmalig: `maxPurchases: 1`. Na aankoop staat hij op 'ontgrendeld' en kan hij niet opnieuw worden gekocht. Extra upgrades voor de leerling zijn er niet.
 - De leerling levert `autoClickerShare` (10%) van de huidige `clickPower` per seconde en voedt hetzelfde doel als een handmatige klik: de actieve order, anders het actieve project. Dat loopt via `setInterval` in `useGameState`; gebruik `applyPoints(target, amount)` en niet `addPoints()`, want die rekent met de volledige clickkracht.
+- Elke klik heeft een bron: `addPoints(target?, source)` met `source` `'manual'` of `'auto'`. Alleen `'manual'` verhoogt `manualClickCount`, en alleen die teller drijft de hamerfeedback. De leerling verhoogt `autoClickCount` en beweegt de hamer nooit.
+- `applyPoints(target, amount)` geeft terug of er punten zijn toegevoegd; zonder actief doel gebeurt er niets en telt de klik niet mee.
+- Tellers voor visuele feedback staan buiten `GameState` en zijn `ref`, geen gewone `let`: een `computed` over een `let` heeft geen reactieve afhankelijkheid en blijft op de eerste waarde staan.
 - De view heet `Leerling` en heeft id `apprentice`. Zolang `autoClickerUnlocked` onwaar is, is dat tabblad disabled via `disabledViews`.
 - De view heet `Smederij` (niet `Smidse`) en heeft id `smithy`.
 - Tijdens `Herstel het aambeeld` (dus zolang project 1 niet voltooid is) zijn `Smederij` en `Upgrades` disabled; `App.vue` levert dat via `disabledViews` en `GameNavigation.vue` rendert semantisch disabled knoppen.

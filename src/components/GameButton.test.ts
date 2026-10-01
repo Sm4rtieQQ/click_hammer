@@ -62,6 +62,50 @@ describe('GameButton', () => {
     expect(wrapper.emitted('click')).toBeUndefined()
   })
 
+  it('starts each strike only on an activation, not on mount', () => {
+    const wrapper = mount(GameButton)
+
+    expect(wrapper.get('button').attributes('data-strike-count')).toBe('0')
+    expect(wrapper.get('.game-button__hammer').classes()).not.toContain(
+      'game-button__hammer--striking',
+    )
+  })
+
+  it('strikes on a click and on a keyboard activation', async () => {
+    const wrapper = mount(GameButton)
+
+    await wrapper.get('button').trigger('click')
+
+    expect(wrapper.get('button').attributes('data-strike-count')).toBe('1')
+    expect(wrapper.get('.game-button__hammer').classes()).toContain(
+      'game-button__hammer--striking',
+    )
+
+    await wrapper.get('button').trigger('keydown', { key: 'Enter' })
+
+    expect(wrapper.get('button').attributes('data-strike-count')).toBe('2')
+  })
+
+  it('ignores unrelated keys and does not strike', async () => {
+    const wrapper = mount(GameButton)
+
+    await wrapper.get('button').trigger('keydown', { key: 'a' })
+
+    expect(wrapper.get('button').attributes('data-strike-count')).toBe('0')
+    expect(wrapper.emitted('click')).toBeUndefined()
+  })
+
+  it('does not strike repeatedly while a key is held down', async () => {
+    const wrapper = mount(GameButton)
+
+    await wrapper
+      .get('button')
+      .trigger('keydown', { key: ' ', repeat: true })
+
+    expect(wrapper.get('button').attributes('data-strike-count')).toBe('0')
+    expect(wrapper.emitted('click')).toBeUndefined()
+  })
+
   it('hides the decorative hammer glyph from assistive technology', () => {
     const wrapper = mount(GameButton)
 

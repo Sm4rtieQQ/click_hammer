@@ -174,6 +174,70 @@ describe('auto-clicker (Leerling)', () => {
     expect(vi.getTimerCount()).toBe(1)
   })
 
+  it('counts automatic clicks separately from manual ones', () => {
+    const {
+      gameState,
+      manualClickCount,
+      autoClickCount,
+      buyUpgrade,
+      addPoints,
+      startAutoClicker,
+    } = useGameState(createTestGameState({ coins: 50 }))
+
+    addPoints('project', 'manual')
+    addPoints('project', 'manual')
+
+    expect(manualClickCount.value).toBe(2)
+    expect(autoClickCount.value).toBe(0)
+
+    buyUpgrade(apprenticeUpgradeId)
+    startAutoClicker()
+
+    vi.advanceTimersByTime(2000)
+
+    // De leerling verhoogt de automatische teller, niet de handmatige.
+    expect(autoClickCount.value).toBe(2)
+    expect(manualClickCount.value).toBe(2)
+    expect(gameState.points).toBeCloseTo(2.2, 10)
+  })
+
+  it('does not count a click when there is no target to feed', () => {
+    const {
+      manualClickCount,
+      autoClickCount,
+      addPoints,
+    } = useGameState(
+      createTestGameState({
+        completedProjects: [1],
+        projectProgress: { 1: 10 },
+        points: 10,
+        offeredOrders: [],
+        activeOrder: null,
+      }),
+    )
+
+    // Alle projecten klaar en geen actieve order: er is niets te vorderen.
+    addPoints('project', 'manual')
+    addPoints('order', 'auto')
+
+    expect(manualClickCount.value).toBe(0)
+    expect(autoClickCount.value).toBe(0)
+  })
+
+  it('never moves the hammer for an automatic click', () => {
+    const { buyUpgrade, startAutoClicker, manualClickCount } = useGameState(
+      createTestGameState({ coins: 50 }),
+    )
+
+    buyUpgrade(apprenticeUpgradeId)
+    startAutoClicker()
+
+    vi.advanceTimersByTime(5000)
+
+    // De hamerfeedback hangt aan de handmatige teller.
+    expect(manualClickCount.value).toBe(0)
+  })
+
   it('cleans up the interval when the owning component scope is disposed', () => {
     const wrapper = mount(
       defineComponent({

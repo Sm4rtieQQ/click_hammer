@@ -119,6 +119,59 @@ describe('auto-clicker integration in App', () => {
     expect(gained).toBeCloseTo(0.3, 10)
   })
 
+  it('never moves the hammer for the apprentice', async () => {
+    seedUnlockedSave()
+
+    const wrapper = mount(App)
+    await wrapper
+      .getComponent(GameNavigation)
+      .get('.game-navigation__tab[data-view="upgrades"]')
+      .trigger('click')
+    await flushPromises()
+
+    const shop = wrapper.getComponent({ name: 'UpgradeShop' })
+    const apprenticeItem = shop
+      .findAll('.upgrade-item')
+      .find((item) => item.text().includes('Leerling'))
+
+    await apprenticeItem?.get('button').trigger('click')
+    await flushPromises()
+
+    // Ga terug naar Projecten: daar staat de aambeeldknop.
+    await wrapper
+      .getComponent(GameNavigation)
+      .get('.game-navigation__tab[data-view="projects"]')
+      .trigger('click')
+    await flushPromises()
+
+    const strikeBefore = wrapper.get('button.game-button').attributes(
+      'data-strike-count',
+    )
+
+    vi.advanceTimersByTime(5000)
+    await flushPromises()
+
+    expect(
+      wrapper.get('button.game-button').attributes('data-strike-count'),
+    ).toBe(strikeBefore)
+  })
+
+  it('moves the hammer on a manual click', async () => {
+    seedUnlockedSave()
+
+    const wrapper = mount(App)
+    const before = Number(
+      wrapper.get('button.game-button').attributes('data-strike-count'),
+    )
+
+    await wrapper.get('button.game-button').trigger('click')
+    await flushPromises()
+
+    expect(
+      Number(wrapper.get('button.game-button').attributes('data-strike-count')),
+    ).toBe(before + 1)
+  })
+
   it('stops the interval after unmount', async () => {
     seedUnlockedSave()
 

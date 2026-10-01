@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, watch } from 'vue'
+import { computed, reactive, readonly, ref, watch } from 'vue'
 import { getCurrentScope, onScopeDispose } from 'vue'
 import type { ComputedRef, DeepReadonly } from 'vue'
 import { createOfferedOrders } from '../data/orders'
@@ -10,7 +10,7 @@ import {
   isNonNegativeNumber,
   normalizeGameState,
 } from '../types/gameStateNormalization'
-import type { ProgressTarget } from '../types/ui'
+import type { ClickSource, ProgressTarget } from '../types/ui'
 
 const baseClickPower = 1
 
@@ -86,7 +86,12 @@ export interface UseGameStateReturn {
   readonly remainingProjectGoals: ComputedRef<Record<number, number>>
   readonly offeredOrders: ComputedRef<readonly DeepReadonly<WorkOrder>[]>
   readonly activeOrder: ComputedRef<DeepReadonly<WorkOrder> | null>
-  readonly addPoints: (target?: ProgressTarget) => void
+  readonly manualClickCount: ComputedRef<number>
+  readonly autoClickCount: ComputedRef<number>
+  readonly addPoints: (
+    target?: ProgressTarget,
+    source?: ClickSource,
+  ) => void
   readonly selectOrder: (orderId: number) => void
   readonly completeProject: (projectId: number) => void
   readonly buyUpgrade: (id: number) => void
@@ -100,6 +105,16 @@ export function useGameState(
 ): UseGameStateReturn {
   const state = reactive<GameState>(normalizeGameState(initialState))
   const gameState = readonly(state)
+
+  /*
+   * Tellers voor de visuele feedback. Ze staan bewust buiten de state: het
+   * onderscheid tussen handmatig en automatisch klikken is geen spelstand en
+   * hoeft dus niet in de save te staan. Het zijn refs, want een `computed` op
+   * een gewone `let` heeft geen reactieve afhankelijkheid en zou de eerste
+   * waarde blijven cachen.
+   */
+  const manualClicks = ref(0)
+  const autoClicks = ref(0)
 
   function getActiveProject(): Project | undefined {
     return projects.find(
@@ -178,31 +193,47 @@ export function useGameState(
     ensureOfferedOrders()
   }
 
-  function addPoints(target?: ProgressTarget): void {
+  function addPoints(
+    target?: ProgressTarget,
+    source: ClickSource = 'manual',
+  ): void {
     const resolvedTarget = target ?? (
       state.activeOrder === null ? 'project' : 'order'
     )
     const clickPower = calculateClickPower(getPurchasedUpgrades())
+    const applied = applyPoints(resolvedTarget, clickPower)
 
-    applyPoints(resolvedTarget, clickPower)
+    if (!applied) {
+      return
+    }
+
+    /*
+     * Teller voor de visuele feedback: alleen een handmatige klik telt mee,
+     * zodat de hamer-animatie nooit door de leerling wordt getriggerd.
+     */
+    if (source === 'manual') {
+      manualClicks.value += 1
+    } else {
+      autoClicks.value += 1
+    }
   }
 
   /**
-   * Voegt `amount` punten toe aan het gekozen doel. `addPoints` gebruikt dit
-   * met de volledige clickkracht; de leerling met een fractie daarvan.
+   * Voegt `amount` punten toe aan het gekozen doel. Geeft terug of er daadwerkelijk
+   * punten zijn toegevoegd: zonder actief doel gebeurt er niets.
    */
-  function applyPoints(target: ProgressTarget, amount: number): void {
+  function applyPoints(target: ProgressTarget, amount: number): boolean {
     const nextPoints = state.points + amount
 
     if (!Number.isFinite(amount) || !Number.isFinite(nextPoints)) {
-      return
+      return false
     }
 
     if (target === 'order') {
       const order = state.activeOrder
 
       if (order === null) {
-        return
+        return false
       }
 
       const nextProgress = Math.min(
@@ -216,14 +247,14 @@ export function useGameState(
         completeOrder(order.id)
       }
 
-      return
+      return true
     }
 
     if (target === 'project') {
       const project = getActiveProject()
 
       if (project === undefined) {
-        return
+        return false
       }
 
       const currentProgress = state.projectProgress[project.id] ?? 0
@@ -238,6 +269,8 @@ export function useGameState(
         completeProject(project.id)
       }
     }
+
+    return true
   }
 
   function selectOrder(orderId: number): void {
@@ -403,6 +436,8 @@ export function useGameState(
     () => state.activeOrder,
   )
   const autoClickerRate = computed(() => clickPower.value * autoClickerShare)
+  const manualClickCount = computed(() => manualClicks.value)
+  const autoClickCount = computed(() => autoClicks.value)
 
   let autoClickerIntervalId: ReturnType<typeof setInterval> | null = null
 
@@ -424,7 +459,14 @@ export function useGameState(
       const target: ProgressTarget =
         state.activeOrder === null ? 'project' : 'order'
 
-      applyPoints(target, autoClickerRate.value)
+      /*
+       * Let op: niet `addPoints(target, 'auto')`, want die rekent met de
+       * volledige clickkracht. De leerling verdient de fractie
+       * `autoClickerRate` en telt daarnaast zelf één automatische klik.
+       */
+      if (applyPoints(target, autoClickerRate.value)) {
+        autoClicks.value += 1
+      }
     }, autoClickerIntervalMs)
 
     /*
@@ -463,6 +505,8 @@ export function useGameState(
     remainingProjectGoals,
     offeredOrders,
     activeOrder,
+    manualClickCount,
+    autoClickCount,
     addPoints,
     selectOrder,
     completeProject,

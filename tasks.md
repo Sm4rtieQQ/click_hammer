@@ -302,10 +302,21 @@
   - **Levering:** pixel-sprites voor een idle-aambeeld, hamer en minimaal idle-, pressed- en strike-poses; de spriteposities sluiten op elkaar aan zonder losse assets.
   - **Test/acceptatie:** de handmatige strike-toont correcte framevolgorde en terugkeer naar idle; alle frames hebben dezelfde pixelgrid en blijven scherp bij schalen.
 
-- [ ] **T36 — Scheid handmatige en automatische clickfeedback (3 uur)**
-  - **Afhankelijk van:** T23, T35.
+- [x] **T36 — Scheid handmatige en automatische clickfeedback (3 uur)**
+  - **Afhankelijk van:** T23, T46.
   - **Levering:** een expliciete `manualClick`-/`autoClick`-onderscheiding in de clickflow; alleen `manualClick` activeert de hamer-op-aambeeld-animatie, terwijl beide routes punten kunnen toevoegen volgens de gekozen gameplayregels.
-  - **Test/acceptatie:** unit- en componenttests bewijzen dat één handmatige klik precies één strike start en een automatische klik geen hameranimatie of vonken activeert.
+  - **Test/acceptatie:** unit- en componenttests bewijzen dat één handmatige klik precies één strike start en een automatische klik geen hameranimatie activeert.
+  - **Uitgevoerd:**
+    - `src/types/ui.ts`: nieuw type `ClickSource = 'manual' | 'auto'`.
+    - `src/composables/useGameState.ts`: `addPoints(target?, source = 'manual')` neemt de bron als tweede parameter; `applyPoints(target, amount)` geeft nu een boolean terug zodat een klik zonder doel niet geteld wordt; nieuwe computed `manualClickCount` en `autoClickCount` staan buiten de state (geen save, want het is geen spelstand).
+    - De interval van de leerling blijft `applyPoints(target, autoClickerRate.value)` gebruiken en telt daarna zelf één automatische klik; `addPoints(target, 'auto')` zou met de volledige clickkracht rekenen.
+    - `src/components/GameButton.vue`: een `strikeCount`-ref verhoogt alleen bij een echte activatie; de slag-animatie hangt aan de klasse `game-button__hammer--striking` in plaats van aan `:active`, met de teller als `:key` zodat elke klik zichtbaar is. `data-strike-count` maakt de toestand toetsbaar.
+    - `src/App.vue`: `handleProjectClick` en `handleOrderClick` geven expliciet `'manual'` door.
+    - Tests: `useGameState.autoClicker.test.ts` krijgt 3 tests (tellers gescheiden, klik zonder doel telt niet, de leerling verhoogt nooit de handmatige teller), `App.autoClicker.test.ts` krijgt 2 tests (hamer blijft stil tijdens 5 seconden leerlingtijd, handmatige klik telt) en `GameButton.test.ts` krijgt 4 tests (geen strike bij mount, strike bij klik en Enter, geen strike op irrelevante toets, geen herhaling bij ingedrukte spatie). Volledige suite: 267 tests, 33 bestanden; typecheck, lint en build slagen.
+  - **Let op:**
+    - De tellers moeten `ref` zijn, geen gewone `let`. Een `computed(() => manualClicks)` over een `let` heeft geen reactieve afhankelijkheid, cached de eerste waarde en verandert daarna nooit meer; de eerste testrun ving dat.
+    - De slag-animatie is van `:active` naar een tellerclass verplaatst. Bij `:active` verdwijnt de animatie nogal snel en ziet een snelle klik niets; met een teller per activatie is elke handmatige klik zichtbaar. Het visueel resultaat is hetzelfde, maar nu ook testbaar en niet uit te lokken door de leerling.
+    - De taak noemde "vonken" in de acceptatie, maar vonken zijn T37 en bestaan nog niet. Deze taak begrenst zich tot de hamerfeedback; de leerling activeert die ook niet.
 
 - [ ] **T37 — Implementeer vonken bij de hamerklap (3 uur)**
   - **Afhankelijk van:** T35, T36.

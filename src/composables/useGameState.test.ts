@@ -30,7 +30,9 @@ describe('useGameState', () => {
       autoClickerUnlocked: false,
     })
     expectTypeOf(gameState).toEqualTypeOf<DeepReadonly<GameState>>()
-    expectTypeOf(addPoints).toEqualTypeOf<(target?: 'order' | 'project') => void>()
+    expectTypeOf(addPoints).toEqualTypeOf<
+      (target?: 'order' | 'project', source?: 'manual' | 'auto') => void
+    >()
     expectTypeOf(completeProject).toEqualTypeOf<(projectId: number) => void>()
     expectTypeOf(buyUpgrade).toEqualTypeOf<(id: number) => void>()
     expectTypeOf(resetGameState).toEqualTypeOf<() => void>()
