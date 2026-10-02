@@ -28,7 +28,8 @@ export const upgrades: Upgrade[] = [
   {
     id: 104,
     name: 'Leerling',
-    description: 'Een leerling die voor je klikt: +10% van je clickkracht per seconde.',
+    description:
+      'Een leerling die voor je op de actieve order slaat: 10% van je clickkracht per seconde. Aan projecten helpt hij niet mee.',
     baseCost: 50,
     costMultiplier: 1.5,
     clickBonus: 0,

@@ -52,6 +52,37 @@
         mask-size: 100% 100%;
         image-rendering: pixelated;
       }
+
+      /*
+        Forge-poses komen uit een sheet van drie cellen, dus geen mask maar een
+        background-position. Dezelfde 50%-stap als GameButton.vue, zodat de
+        galerij precies toont wat het spel doet.
+      */
+      .forge-row {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .forge-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid rgb(255 255 255 / 12%);
+        border-radius: 4px;
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .forge-cell span {
+        display: block;
+        background-image: var(--forge);
+        background-position: calc(var(--frame) * 50%) 0;
+        background-repeat: no-repeat;
+        background-size: 300% 100%;
+        image-rendering: pixelated;
+      }
     </style>
   </head>
   <body>
@@ -96,6 +127,33 @@
 
       const SIZES = [16, 32, 64]
 
+      // Forge-sheet: cellen van 48px, van links naar rechts idle, pressed, strike.
+      const FORGE_URL = 'src/sprites/forge/anvil-sheet.svg'
+      const FORGE_POSES = ['idle', 'pressed', 'strike']
+      const FORGE_SIZES = [48, 96, 144]
+
+      function renderForgeRow(size) {
+        const row = document.createElement('div')
+        row.className = 'forge-row'
+
+        FORGE_POSES.forEach((pose, frame) => {
+          const cell = document.createElement('div')
+          cell.className = 'forge-cell'
+
+          const span = document.createElement('span')
+          span.style.width = size + 'px'
+          span.style.height = size + 'px'
+          span.style.setProperty('--forge', `url("${FORGE_URL}")`)
+          span.style.setProperty('--frame', String(frame))
+
+          cell.appendChild(span)
+          cell.appendChild(document.createTextNode(pose))
+          row.appendChild(cell)
+        })
+
+        return row
+      }
+
       function renderRow(material, size) {
         const row = document.createElement('div')
         row.className = 'row'
@@ -127,6 +185,17 @@
         materials.forEach((material) => {
           root.appendChild(renderRow(material, size))
         })
+      })
+
+      const forgeHeading = document.createElement('h2')
+      forgeHeading.textContent = 'Forge: aambeeld en hamer (48px-cel)'
+      root.appendChild(forgeHeading)
+
+      FORGE_SIZES.forEach((size) => {
+        const h3 = document.createElement('h2')
+        h3.textContent = `Op ${size}px (${size / 48}x)`
+        root.appendChild(h3)
+        root.appendChild(renderForgeRow(size))
       })
     </script>
   </body>

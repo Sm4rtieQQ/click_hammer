@@ -1,0 +1,347 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 320 200"
+  shape-rendering="crispEdges"
+>
+  <!--
+    Smederij, interieur. Zelfde conventies als stad.svg: een scène tekent op een
+    eigen 320 x 200 grid, niet op de 16 x 16 spritegrid, en alleen met rect op
+    gehele coördinaten.
+
+    Compositie, afgestemd op de manier waarop App.vue de scène toont
+    (background-size: cover, position center bottom). Op een breed scherm
+    schaalt de tekening met de breedte en valt de bovenste 28 procent weg; het
+    paneel bedekt dan de middelste 58 procent. Blijven zichtbaar:
+      - x 0-96, y 57-200: haard, vuur en rookvang;
+      - x 256-320, y 57-200: gereedschapsrek, lamp, helm en schild;
+      - x 100-244, y 156-200: koelwaterkuip en de vloer, want op 320px vult
+        het paneel vrijwel de hele breedte en blijven alleen de bovenste en
+        onderste strook over.
+    Alles wat herkenbaar moet zijn, staat dus laag of helemaal opzij.
+  -->
+
+  <!-- Muurbasis; de baksteen hierbovenop levert de mortel tussen de stenen -->
+  <rect x="0" y="0" width="320" height="200" fill="#3f2b26" />
+
+  <!-- Baksteen in een verspringend verband -->
+  <g fill="#4a332d">
+    <rect x="0" y="18" width="30" height="10" />
+    <rect x="32" y="18" width="30" height="10" />
+    <rect x="64" y="18" width="30" height="10" />
+    <rect x="96" y="18" width="30" height="10" />
+    <rect x="128" y="18" width="30" height="10" />
+    <rect x="160" y="18" width="30" height="10" />
+    <rect x="192" y="18" width="30" height="10" />
+    <rect x="224" y="18" width="30" height="10" />
+    <rect x="256" y="18" width="30" height="10" />
+    <rect x="288" y="18" width="30" height="10" />
+    <rect x="0" y="42" width="30" height="10" />
+    <rect x="32" y="42" width="30" height="10" />
+    <rect x="64" y="42" width="30" height="10" />
+    <rect x="96" y="42" width="30" height="10" />
+    <rect x="128" y="42" width="30" height="10" />
+    <rect x="160" y="42" width="30" height="10" />
+    <rect x="192" y="42" width="30" height="10" />
+    <rect x="224" y="42" width="30" height="10" />
+    <rect x="256" y="42" width="30" height="10" />
+    <rect x="288" y="42" width="30" height="10" />
+    <rect x="0" y="66" width="30" height="10" />
+    <rect x="32" y="66" width="30" height="10" />
+    <rect x="64" y="66" width="30" height="10" />
+    <rect x="96" y="66" width="30" height="10" />
+    <rect x="128" y="66" width="30" height="10" />
+    <rect x="160" y="66" width="30" height="10" />
+    <rect x="192" y="66" width="30" height="10" />
+    <rect x="224" y="66" width="30" height="10" />
+    <rect x="256" y="66" width="30" height="10" />
+    <rect x="288" y="66" width="30" height="10" />
+  </g>
+  <g fill="#3a2721">
+    <rect x="16" y="30" width="30" height="10" />
+    <rect x="48" y="30" width="30" height="10" />
+    <rect x="80" y="30" width="30" height="10" />
+    <rect x="112" y="30" width="30" height="10" />
+    <rect x="144" y="30" width="30" height="10" />
+    <rect x="176" y="30" width="30" height="10" />
+    <rect x="208" y="30" width="30" height="10" />
+    <rect x="240" y="30" width="30" height="10" />
+    <rect x="272" y="30" width="30" height="10" />
+    <rect x="304" y="30" width="16" height="10" />
+    <rect x="16" y="54" width="30" height="10" />
+    <rect x="48" y="54" width="30" height="10" />
+    <rect x="80" y="54" width="30" height="10" />
+    <rect x="112" y="54" width="30" height="10" />
+    <rect x="144" y="54" width="30" height="10" />
+    <rect x="176" y="54" width="30" height="10" />
+    <rect x="208" y="54" width="30" height="10" />
+    <rect x="240" y="54" width="30" height="10" />
+    <rect x="272" y="54" width="30" height="10" />
+    <rect x="304" y="54" width="16" height="10" />
+    <rect x="16" y="78" width="30" height="10" />
+    <rect x="48" y="78" width="30" height="10" />
+    <rect x="80" y="78" width="30" height="10" />
+    <rect x="112" y="78" width="30" height="10" />
+    <rect x="144" y="78" width="30" height="10" />
+    <rect x="176" y="78" width="30" height="10" />
+    <rect x="208" y="78" width="30" height="10" />
+    <rect x="240" y="78" width="30" height="10" />
+    <rect x="272" y="78" width="30" height="10" />
+    <rect x="304" y="78" width="16" height="10" />
+  </g>
+
+  <!-- Dakbalk met ijzeren banden, en de paal naast de haard -->
+  <rect x="0" y="0" width="320" height="9" fill="#241816" />
+  <g fill="#5c3f28">
+    <rect x="100" y="0" width="6" height="9" />
+    <rect x="140" y="0" width="6" height="9" />
+    <rect x="180" y="0" width="6" height="9" />
+    <rect x="220" y="0" width="6" height="9" />
+  </g>
+  <rect x="0" y="9" width="320" height="3" fill="#4a3524" />
+  <rect x="166" y="12" width="8" height="62" fill="#4a3524" />
+  <rect x="166" y="12" width="2" height="62" fill="#5c3f28" />
+
+  <!-- Kettingen en gereedschap onder de balk -->
+  <g fill="#7d8b96">
+    <rect x="178" y="12" width="3" height="6" />
+    <rect x="178" y="20" width="3" height="6" />
+    <rect x="178" y="28" width="3" height="6" />
+    <rect x="210" y="12" width="3" height="5" />
+    <rect x="210" y="19" width="3" height="5" />
+    <rect x="210" y="26" width="3" height="5" />
+  </g>
+  <rect x="176" y="34" width="7" height="4" fill="#5c6871" />
+  <rect x="180" y="34" width="3" height="8" fill="#5c6871" />
+  <g fill="#6f7d88">
+    <rect x="173" y="42" width="3" height="20" />
+    <rect x="185" y="42" width="3" height="20" />
+  </g>
+  <rect x="173" y="60" width="4" height="4" fill="#8e98a3" />
+  <rect x="184" y="60" width="4" height="4" fill="#8e98a3" />
+  <rect x="209" y="31" width="5" height="27" fill="#5c3f28" />
+  <rect x="200" y="56" width="22" height="9" fill="#6f7d88" />
+  <rect x="200" y="56" width="22" height="3" fill="#8e98a3" />
+
+  <!-- Rookvang boven de haard, in oplopende trappen -->
+  <g fill="#3a2921">
+    <rect x="0" y="76" width="96" height="14" />
+    <rect x="6" y="62" width="84" height="14" />
+    <rect x="14" y="48" width="68" height="14" />
+    <rect x="22" y="34" width="52" height="14" />
+    <rect x="28" y="22" width="40" height="12" />
+    <rect x="32" y="12" width="32" height="10" />
+    <rect x="36" y="2" width="24" height="10" />
+  </g>
+  <g fill="#5c3f28">
+    <rect x="0" y="76" width="3" height="14" />
+    <rect x="6" y="62" width="3" height="14" />
+    <rect x="14" y="48" width="3" height="14" />
+    <rect x="22" y="34" width="3" height="14" />
+    <rect x="28" y="22" width="3" height="12" />
+    <rect x="32" y="12" width="3" height="10" />
+    <rect x="36" y="2" width="3" height="10" />
+  </g>
+  <g fill="#8a6f52">
+    <rect x="12" y="82" width="4" height="4" />
+    <rect x="30" y="82" width="4" height="4" />
+    <rect x="48" y="82" width="4" height="4" />
+    <rect x="66" y="82" width="4" height="4" />
+    <rect x="84" y="82" width="4" height="4" />
+  </g>
+  <rect x="0" y="90" width="100" height="6" fill="#2a1c19" />
+
+  <!-- Haard van steen -->
+  <rect x="0" y="96" width="100" height="70" fill="#6b5a4a" />
+  <rect x="0" y="96" width="100" height="4" fill="#8a7a66" />
+  <rect x="0" y="162" width="100" height="8" fill="#4e4038" />
+  <g fill="#5a4a3c">
+    <rect x="2" y="106" width="12" height="8" />
+    <rect x="82" y="106" width="16" height="8" />
+    <rect x="2" y="126" width="10" height="10" />
+    <rect x="86" y="128" width="12" height="10" />
+    <rect x="2" y="148" width="14" height="8" />
+    <rect x="80" y="150" width="18" height="8" />
+  </g>
+  <g fill="#7d6b57">
+    <rect x="2" y="100" width="8" height="5" />
+    <rect x="88" y="100" width="10" height="5" />
+    <rect x="4" y="118" width="8" height="6" />
+    <rect x="88" y="120" width="10" height="6" />
+    <rect x="4" y="140" width="8" height="6" />
+    <rect x="88" y="142" width="10" height="6" />
+  </g>
+
+  <!-- Vuurmond met gloeiende kolen: het warmste en helderste deel van de scène -->
+  <rect x="14" y="104" width="64" height="52" fill="#2a1a14" />
+  <rect x="20" y="112" width="52" height="38" fill="#7a2d12" />
+  <rect x="26" y="118" width="40" height="26" fill="#d9822b" />
+  <rect x="34" y="124" width="24" height="14" fill="#f0a04a" />
+  <rect x="40" y="128" width="12" height="6" fill="#ffd166" />
+  <rect x="44" y="130" width="4" height="2" fill="#fff3d0" />
+  <g fill="#8f4818">
+    <rect x="18" y="144" width="10" height="6" />
+    <rect x="34" y="146" width="12" height="5" />
+    <rect x="54" y="144" width="10" height="6" />
+    <rect x="66" y="147" width="10" height="4" />
+  </g>
+  <g fill="#d9822b">
+    <rect x="22" y="146" width="6" height="3" />
+    <rect x="40" y="148" width="6" height="3" />
+    <rect x="58" y="146" width="6" height="3" />
+  </g>
+
+  <!-- Vonken die voor de haardplaat langs omhoog gaan -->
+  <g fill="#ffd166">
+    <rect x="30" y="92" width="2" height="2" />
+    <rect x="48" y="88" width="2" height="2" />
+    <rect x="62" y="94" width="2" height="2" />
+    <rect x="38" y="84" width="2" height="2" />
+  </g>
+  <g fill="#f0a04a">
+    <rect x="42" y="99" width="2" height="2" />
+    <rect x="24" y="96" width="2" height="2" />
+  </g>
+
+  <!-- Warmtegloed op de muur naast de haard, in uitlopende trappen -->
+  <rect x="100" y="96" width="16" height="72" fill="#4a2b19" />
+  <rect x="116" y="100" width="12" height="64" fill="#402619" />
+  <rect x="128" y="106" width="8" height="54" fill="#38221a" />
+
+  <!-- Blaasbalg met houten handvat en mondstuk in het vuur -->
+  <rect x="96" y="122" width="12" height="7" fill="#4c545c" />
+  <rect x="106" y="106" width="34" height="32" fill="#6b4a2c" />
+  <rect x="106" y="106" width="34" height="3" fill="#8a6f52" />
+  <rect x="108" y="116" width="30" height="2" fill="#4a3524" />
+  <rect x="108" y="124" width="30" height="2" fill="#4a3524" />
+  <rect x="108" y="132" width="30" height="2" fill="#4a3524" />
+  <rect x="140" y="114" width="18" height="5" fill="#5c3f28" />
+  <rect x="154" y="108" width="6" height="14" fill="#5c3f28" />
+
+  <!-- IJzerstaal aan de muur naast de haard -->
+  <rect x="176" y="66" width="74" height="5" fill="#5c3f28" />
+  <rect x="176" y="66" width="74" height="2" fill="#7d5a36" />
+  <g fill="#6f7d88">
+    <rect x="182" y="71" width="5" height="30" />
+    <rect x="196" y="71" width="5" height="24" />
+    <rect x="210" y="71" width="5" height="34" />
+    <rect x="224" y="71" width="5" height="20" />
+  </g>
+  <g fill="#8e98a3">
+    <rect x="182" y="71" width="5" height="2" />
+    <rect x="196" y="71" width="5" height="2" />
+    <rect x="210" y="71" width="5" height="2" />
+    <rect x="224" y="71" width="5" height="2" />
+  </g>
+
+  <!--
+    Het aambeeld zelf staat sinds T35 niet meer in deze scène. De losse sprite in
+    `src/sprites/forge/anvil-sheet.svg` legt zich boven op deze vloer, dus een
+    tweede aambeeld zou er dubbel en uit de lijn staan.
+  -->
+
+  <!-- Koelwaterkuip; die staat in de onderste strook die op 320px overblijft -->
+  <rect x="114" y="156" width="44" height="38" fill="#6b4a2c" />
+  <rect x="114" y="156" width="44" height="4" fill="#7d5a36" />
+  <rect x="112" y="164" width="48" height="4" fill="#4c545c" />
+  <rect x="112" y="184" width="48" height="4" fill="#4c545c" />
+  <rect x="120" y="160" width="32" height="30" fill="#3d4d5a" />
+  <rect x="124" y="164" width="12" height="3" fill="#6f8899" />
+
+  <!-- Gereedschapsrek rechts; blijft op een breed scherm naast het paneel staan -->
+  <rect x="256" y="64" width="64" height="5" fill="#5c3f28" />
+  <rect x="256" y="64" width="64" height="2" fill="#7d5a36" />
+  <g fill="#6f7d88">
+    <rect x="290" y="69" width="3" height="23" />
+    <rect x="298" y="69" width="3" height="23" />
+  </g>
+  <rect x="290" y="90" width="4" height="4" fill="#8e98a3" />
+  <rect x="297" y="90" width="4" height="4" fill="#8e98a3" />
+  <!--
+    Alleen de tang blijft aan de rek hangen. De hamer die hier eerst stond is
+    weg: T35 levert nu één hamer als sprite, en twee hamers in beeld zouden
+    verwarring geven over welke je moet gebruiken.
+  -->
+
+  <!-- Hangende lamp; koel licht bovenop de warmte van het vuur -->
+  <rect x="270" y="69" width="3" height="5" fill="#7d8b96" />
+  <rect x="262" y="74" width="20" height="4" fill="#5c6871" />
+  <rect x="264" y="78" width="16" height="13" fill="#3f4a52" />
+  <rect x="268" y="82" width="8" height="8" fill="#ffd166" />
+  <rect x="270" y="84" width="4" height="4" fill="#fff3d0" />
+  <rect x="262" y="91" width="20" height="3" fill="#5c6871" />
+
+  <!-- Plank met helm, schild en stuk ijzer -->
+  <rect x="256" y="112" width="64" height="6" fill="#5c3f28" />
+  <rect x="256" y="112" width="64" height="2" fill="#7d5a36" />
+  <rect x="262" y="98" width="16" height="14" fill="#6f7d88" />
+  <rect x="264" y="96" width="12" height="3" fill="#8e98a3" />
+  <rect x="262" y="108" width="16" height="4" fill="#5c6871" />
+  <rect x="286" y="98" width="18" height="14" fill="#5f7d96" />
+  <rect x="290" y="102" width="10" height="6" fill="#9dbcd6" />
+  <rect x="308" y="104" width="12" height="8" fill="#8e98a3" />
+
+  <!--
+    Houtstapel tegen de rechtermuur. Vier door elkaar gelegde stammen vullen
+    het gat tussen plank en vloer, zodat die randstrook niet leeg blijft.
+  -->
+  <g fill="#6b4a2c">
+    <rect x="258" y="126" width="60" height="12" />
+    <rect x="258" y="150" width="60" height="12" />
+  </g>
+  <g fill="#8a6f52">
+    <rect x="260" y="126" width="56" height="3" />
+    <rect x="260" y="150" width="56" height="3" />
+  </g>
+  <g fill="#5c3f28">
+    <rect x="258" y="138" width="60" height="12" />
+    <rect x="258" y="162" width="60" height="8" />
+  </g>
+  <g fill="#7d5a36">
+    <rect x="260" y="138" width="56" height="3" />
+    <rect x="260" y="162" width="56" height="3" />
+  </g>
+
+  <!--
+    Vloer. De tint loopt van warm bij het vuur naar koel rechts, zodat het
+    licht uit de haard met één rij kleuren vertelt.
+  -->
+  <rect x="0" y="170" width="320" height="30" fill="#3f2d20" />
+  <g fill="#7d5a36">
+    <rect x="0" y="170" width="30" height="9" />
+    <rect x="34" y="170" width="30" height="9" />
+    <rect x="68" y="170" width="28" height="9" />
+    <rect x="0" y="192" width="40" height="8" />
+    <rect x="44" y="192" width="32" height="8" />
+    <rect x="80" y="192" width="26" height="8" />
+  </g>
+  <g fill="#5c3f28">
+    <rect x="100" y="170" width="34" height="9" />
+    <rect x="138" y="170" width="28" height="9" />
+    <rect x="170" y="170" width="30" height="9" />
+    <rect x="204" y="170" width="26" height="9" />
+    <rect x="234" y="170" width="30" height="9" />
+    <rect x="268" y="170" width="28" height="9" />
+    <rect x="300" y="170" width="20" height="9" />
+    <rect x="0" y="182" width="34" height="8" />
+    <rect x="38" y="182" width="28" height="8" />
+    <rect x="70" y="182" width="30" height="8" />
+  </g>
+  <g fill="#4a3527">
+    <rect x="104" y="182" width="26" height="8" />
+    <rect x="134" y="182" width="32" height="8" />
+    <rect x="170" y="182" width="28" height="8" />
+    <rect x="202" y="182" width="34" height="8" />
+    <rect x="240" y="182" width="26" height="8" />
+    <rect x="270" y="182" width="30" height="8" />
+    <rect x="304" y="182" width="16" height="8" />
+  </g>
+  <g fill="#3f2d20">
+    <rect x="110" y="192" width="38" height="8" />
+    <rect x="152" y="192" width="30" height="8" />
+    <rect x="186" y="192" width="36" height="8" />
+    <rect x="226" y="192" width="32" height="8" />
+    <rect x="262" y="192" width="34" height="8" />
+    <rect x="300" y="192" width="20" height="8" />
+  </g>
+  <rect x="0" y="170" width="100" height="4" fill="#8a5a2c" />
+</svg>

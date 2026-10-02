@@ -1,4 +1,5 @@
 import backgroundCityUrl from '../sprites/backgrounds/stad.svg'
+import backgroundSmithyUrl from '../sprites/backgrounds/smederij.svg'
 
 export type GameView = 'projects' | 'smithy' | 'upgrades' | 'apprentice'
 export type ProgressTarget = 'order' | 'project'
@@ -16,7 +17,7 @@ export type ClickSource = 'manual' | 'auto'
 const backgroundUrlsByView: ReadonlyMap<GameView, string | undefined> =
   new Map<GameView, string | undefined>([
     ['projects', backgroundCityUrl],
-    ['smithy', undefined],
+    ['smithy', backgroundSmithyUrl],
     ['upgrades', undefined],
     ['apprentice', undefined],
   ])

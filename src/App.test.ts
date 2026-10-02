@@ -15,6 +15,7 @@ import UpgradeShop from './components/UpgradeShop.vue'
 import { GAME_STORAGE_KEY } from './composables/gameStorage'
 import { createInitialGameState } from './types/game'
 import type { GameState } from './types/game'
+import { normalizeGameState } from './types/gameStateNormalization'
 import { createTestGameState } from './test/fixtures'
 
 interface ExposedAppApi {
@@ -31,10 +32,16 @@ function getExposedApi(wrapper: ReturnType<typeof mount>): ExposedAppApi {
   return wrapper.vm as unknown as ExposedAppApi
 }
 
+/**
+ * Schrijft een save die het spel zonder reparatie inlaadt. De fixture heeft
+ * geen orderoffertes, dus zonder normalisatie zou elk spel met project één klaar
+ * als `recovered` terugkomen en een opslagmelding tonen. Dat maskeert in deze
+ * testbestand precies de dingen die we hier willen toetsen.
+ */
 function storeState(overrides: Partial<GameState> = {}): void {
   window.localStorage.setItem(
     GAME_STORAGE_KEY,
-    JSON.stringify(createTestGameState(overrides)),
+    JSON.stringify(normalizeGameState(createTestGameState(overrides))),
   )
 }
 

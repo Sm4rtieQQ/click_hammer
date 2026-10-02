@@ -32,6 +32,10 @@ De eerste keer dat de game wordt geopend, geldt:
 - Op **Smederij** voeden clicks de actieve order.
 - Op **Projecten** voeden clicks het actieve ontgrendelde project.
 - Op **Upgrades** zijn geen clickacties beschikbaar.
+- De **leerling** voegt iedere seconde `clickPower * 0.1` toe, uitsluitend aan de **actieve order**. Aan projecten helpt hij niet mee.
+- Zonder actieve order levert de leerling niets: de tick doet dan geen `applyPoints('order', …)`, dus `points`, `projectProgress` en `autoClickCount` blijven ongemoeid. Hij wacht tot er een order gekozen is.
+- De `setInterval` van de leerling draait door zolang hij ontgrendeld is en wordt niet gestopt of herstart bij het kiezen of afronden van een order.
+- Het Leerling-paneel toont een wachtstatus zonder rate zolang er geen actieve order is; een cijfer dat er toch niet binnenkomt zou misleidend zijn.
 - `clickPower` begint op `1`.
 - `clickBonus` is een percentagebonus. Elke aangekochte upgrade vermenigvuldigt met `1 + clickBonus / 100`.
 - Bij herhaalde aankopen wordt de bonus opnieuw toegepast.
@@ -150,6 +154,7 @@ Bij voltooiing wordt de beloning één keer toegekend, verdwijnt de actieve orde
 - `purchaseCount` is het aantal voorkomens van een `upgradeId` in `upgrades`.
 - `currentCost = max(1, floor(baseCost * costMultiplier ** purchaseCount))`.
 - Een mislukte aankoop, onvoldoende munten of onbekende ID verandert geen state.
+- `Leerling` (ID 104) is eenmalig (`maxPurchases: 1`) en ontgrendelt de auto-clicker. Zijn `autoClickerShare` is 0.1 en hij voedt uitsluitend de actieve order.
 
 ## State-invarianten
 
@@ -200,6 +205,7 @@ Daarnaast worden onbekende IDs, ongeldige orderdata, dubbele orderitems en ongel
 | Geen projecten | lege projectcatalogus | `role="status"` in plaats van een lege lijst |
 | Geen orders | lege orderoffers | `role="status"` in plaats van een lege lijst |
 | Geen upgrades | lege upgradecatalogus | bestaande lege-catalogusmelding |
+| Leerling inactief | `autoClickerUnlocked` en geen actieve order | `role="status"` in het Leerling-paneel, zonder rate |
 | Niet betaalbaar | `coins < currentCost` | `Niet betaalbaar` plus `Nog N munten nodig` |
 
 Een opslagfout blokkeert nooit clicks; het spel blijft volledig speelbaar en waarschuwt alleen dat de voortgang verdwijnt bij het sluiten van het venster.
@@ -216,6 +222,7 @@ Een opslagfout blokkeert nooit clicks; het spel blijft volledig speelbaar en waa
 
 - `Herstel het aambeeld` is het eerste zichtbare doel op het projecttabblad.
 - Alleen `manualClick` start de hamer-op-aambeeld-animatie en vonken.
-- Een `project-complete`-event start één confetti-achtige explosie van gouden munten.
+- Een voltooid **project** of een afgeronde **order** start één confetti-achtige explosie van gouden munten, in de view waarin het doel is afgerond. Beide volgen de state: een watcher op `completedProjects` en een op `completedOrderCount`. Een doel zonder beloning (`Herstel het aambeeld`, met 0 munten) viert niet.
+- Een afgeronde order viert ook als de **leerling** hem heeft voortgezet; de beloning hoort bij het doel, niet bij de klikbron.
 - Elke upgrade heeft een passende pixel-art sprite.
 - De volledige UI gebruikt een charmante pixel-artstijl met een middeleeuwse-smithachtergrond.

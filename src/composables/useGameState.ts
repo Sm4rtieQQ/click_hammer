@@ -76,6 +76,7 @@ export interface UseGameStateReturn {
   readonly gameState: DeepReadonly<GameState>
   readonly clickPower: ComputedRef<number>
   readonly autoClickerRate: ComputedRef<number>
+  readonly isAutoClickerWorking: ComputedRef<boolean>
   readonly currentUpgradeCosts: ComputedRef<Record<number, number>>
   readonly purchaseCounts: ComputedRef<Record<number, number>>
   readonly affordableUpgradeIds: ComputedRef<ReadonlySet<number>>
@@ -436,6 +437,14 @@ export function useGameState(
     () => state.activeOrder,
   )
   const autoClickerRate = computed(() => clickPower.value * autoClickerShare)
+  /*
+   * De leerling werkt pas vanaf het moment dat er een order te slaan valt.
+   * Zonder actieve order levert hij niets, en dat moet het paneel ook eerlijk
+   * tonen in plaats van een rate die er toch niet binnenkomt.
+   */
+  const isAutoClickerWorking = computed(
+    () => state.autoClickerUnlocked && state.activeOrder !== null,
+  )
   const manualClickCount = computed(() => manualClicks.value)
   const autoClickCount = computed(() => autoClicks.value)
 
@@ -454,17 +463,15 @@ export function useGameState(
     }
 
     autoClickerIntervalId = setInterval(() => {
-      // De leerling voedt hetzelfde doel als een handmatige klik: de actieve
-      // order wanneer die er is, anders het actieve project.
-      const target: ProgressTarget =
-        state.activeOrder === null ? 'project' : 'order'
-
       /*
-       * Let op: niet `addPoints(target, 'auto')`, want die rekent met de
+       * De leerling werkt uitsluitend aan een actieve order in de smederij.
+       * Projecten worden alleen met een handmatige klik gevorderd.
+       *
+       * Let op: niet `addPoints('order', 'auto')`, want die rekent met de
        * volledige clickkracht. De leerling verdient de fractie
        * `autoClickerRate` en telt daarnaast zelf één automatische klik.
        */
-      if (applyPoints(target, autoClickerRate.value)) {
+      if (applyPoints('order', autoClickerRate.value)) {
         autoClicks.value += 1
       }
     }, autoClickerIntervalMs)
@@ -495,6 +502,7 @@ export function useGameState(
     gameState,
     clickPower,
     autoClickerRate,
+    isAutoClickerWorking,
     currentUpgradeCosts,
     purchaseCounts,
     affordableUpgradeIds,

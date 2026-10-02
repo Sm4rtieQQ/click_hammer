@@ -2,6 +2,12 @@
 defineProps<{
   autoClickerRate: number
   clickPower: number
+  /**
+   * Of er een order te slaan valt. Zonder order levert de leerling niets, en
+   * dan tonen we geen rate: een cijfer dat er niet inkomt is erger dan geen
+   * cijfer. De speler moet hier zien dat hij zelf een order moet kiezen.
+   */
+  isWorking: boolean
 }>()
 </script>
 
@@ -19,34 +25,49 @@ defineProps<{
       </h2>
     </div>
 
-    <p class="apprentice-panel__description">
-      Je leerling klikt automatisch voor je. Elke seconde voegt hij
-      <strong>{{ autoClickerRate.toFixed(1) }}</strong> punten toe —
-      10% van je huidige clickkracht ({{ clickPower.toFixed(1) }}).
-    </p>
+    <template v-if="isWorking">
+      <p class="apprentice-panel__description">
+        Je leerling slaat voor je op de actieve order in de smederij. Elke
+        seconde voegt hij
+        <strong>{{ autoClickerRate.toFixed(1) }}</strong> punten toe —
+        10% van je huidige clickkracht ({{ clickPower.toFixed(1) }}).
+      </p>
 
-    <div class="apprentice-panel__stats">
-      <div class="apprentice-panel__stat">
-        <span class="apprentice-panel__stat-value">
-          {{ autoClickerRate.toFixed(1) }}
-        </span>
-        <span class="apprentice-panel__stat-label">
-          punten per seconde
-        </span>
+      <div class="apprentice-panel__stats">
+        <div class="apprentice-panel__stat">
+          <span class="apprentice-panel__stat-value">
+            {{ autoClickerRate.toFixed(1) }}
+          </span>
+          <span class="apprentice-panel__stat-label">
+            punten per seconde
+          </span>
+        </div>
+        <div class="apprentice-panel__stat">
+          <span class="apprentice-panel__stat-value">
+            {{ (autoClickerRate * 60).toFixed(0) }}
+          </span>
+          <span class="apprentice-panel__stat-label">
+            punten per minuut
+          </span>
+        </div>
       </div>
-      <div class="apprentice-panel__stat">
-        <span class="apprentice-panel__stat-value">
-          {{ (autoClickerRate * 60).toFixed(0) }}
-        </span>
-        <span class="apprentice-panel__stat-label">
-          punten per minuut
-        </span>
-      </div>
-    </div>
 
-    <p class="apprentice-panel__note">
-      De leerling werkt ongeacht welke tab je bekijkt. Hij voedt hetzelfde
-      doel als een normale klik: de actieve order, of het actieve project.
+      <p class="apprentice-panel__note">
+        Aan projecten helpt hij niet mee; die sla je zelf op het aambeeld.
+      </p>
+    </template>
+
+    <p
+      v-else
+      class="apprentice-panel__waiting"
+      role="status"
+    >
+      <span class="apprentice-panel__waiting-title">
+        De leerling werkt niet
+      </span>
+      Hij slaat alleen op een order. Kies een order bij
+      <strong>Smederij</strong> en hij werkt meteen mee. Aan projecten helpt hij
+      niet mee, die vorder je zelf.
     </p>
   </section>
 </template>
@@ -124,5 +145,33 @@ defineProps<{
   background: rgb(255 255 255 / 4%);
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+/*
+ * Wachtstatus. Bewust geen cijfers en geen rate: zolang er geen order is komt
+ * er niets binnen, dus elk getal zou de speler misleiden. De rand links is
+ * dezelfde `--color-accent` als bij het werkende paneel, zodat de overgang
+ * niet als een fout of een andere view oogt.
+ */
+.apprentice-panel__waiting {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 0 0.6rem 0.6rem 0;
+  color: var(--color-text-muted);
+  background: rgb(255 255 255 / 4%);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.apprentice-panel__waiting-title {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.apprentice-panel__waiting strong {
+  color: var(--color-focus);
 }
 </style>
